@@ -8,6 +8,10 @@ import subprocess
 import sys
 import os
 
+os.environ["HTTP_PROXY"] = "http://127.0.0.1:10808"
+os.environ["HTTPS_PROXY"] = "http://127.0.0.1:10808"
+
+
 def check_requirements():
     """检查必要的依赖是否安装"""
     try:

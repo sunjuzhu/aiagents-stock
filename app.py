@@ -2690,6 +2690,12 @@ def display_comparison_table(results):
     # 创建DataFrame
     df = pd.DataFrame(comparison_data)
 
+    # --- 新增修复代码开始 ---
+    # 将“目标价格”这一列强制转换为字符串，消除 PyArrow 的类型歧义
+    if '目标价格' in df.columns:
+        df['目标价格'] = df['目标价格'].astype(str)
+    # --- 新增修复代码结束 ---
+
     # 应用样式
     # 显示表格（不使用样式，避免matplotlib导入问题）
     st.dataframe(
