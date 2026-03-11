@@ -14,6 +14,18 @@ class ConfigManager:
     def __init__(self, env_file: str = ".env"):
         self.env_file = Path(env_file)
         self.default_config = {
+            "HTTP_PROXY": {
+                "value": "",
+                "description": "HTTP代理地址 (如 http://127.0.0.1:10808)",
+                "required": False,
+                "type": "text"
+            },
+            "HTTPS_PROXY": {
+                "value": "",
+                "description": "HTTPS代理地址 (如 http://127.0.0.1:10808)",
+                "required": False,
+                "type": "text"
+            },
             "DEEPSEEK_API_KEY": {
                 "value": "",
                 "description": "DeepSeek API密钥",
@@ -169,6 +181,11 @@ class ConfigManager:
     def write_env(self, config: Dict[str, str]) -> bool:
         """保存配置到.env文件"""
         try:
+            lines.append("# ========== 网络代理配置（可选）==========")
+            lines.append(f'HTTP_PROXY="{config.get("HTTP_PROXY", "")}"')
+            lines.append(f'HTTPS_PROXY="{config.get("HTTPS_PROXY", "")}"')
+            lines.append("")
+
             lines = []
             lines.append("# AI股票分析系统环境配置")
             lines.append("# 由系统自动生成和管理")
@@ -250,6 +267,24 @@ class ConfigManager:
                 return False, "DeepSeek API Key格式不正确（长度太短）"
         
         return True, "配置验证通过"
+    def setup_proxy(self):
+        """
+        根据配置设置系统环境变量，解决 Gmail/API 访问问题
+        建议在 main.py 或程序入口处第一时间调用
+        """
+        config = self.read_env()
+        http_proxy = config.get("HTTP_PROXY", "").strip()
+        https_proxy = config.get("HTTPS_PROXY", "").strip()
+
+        if http_proxy:
+            os.environ["http_proxy"] = http_proxy
+            os.environ["HTTP_PROXY"] = http_proxy
+        if https_proxy:
+            os.environ["https_proxy"] = https_proxy
+            os.environ["HTTPS_PROXY"] = https_proxy
+        
+        if http_proxy or https_proxy:
+            print(f"🌐 网络代理已注入: {http_proxy or https_proxy}")
     
     def reload_config(self):
         """重新加载配置（重新加载.env文件）"""

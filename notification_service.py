@@ -5,6 +5,7 @@ import json
 import os
 from typing import Dict, List
 import streamlit as st
+import pandas as pd
 
 from monitor_db import monitor_db
 
@@ -714,11 +715,20 @@ _此消息由AI股票分析系统自动发送_"""
             msg.attach(part1)
             msg.attach(part2)
             
-            with smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port']) as server:
+            # with smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port']) as server:
+            #     server.starttls()
+            #     server.login(self.config['email_from'], self.config['email_password'])
+            #     server.send_message(msg)
+            port = int(self.config['smtp_port'])
+            if port == 465:
+                server = smtplib.SMTP_SSL(self.config['smtp_server'], port)
+            else:
+                server = smtplib.SMTP(self.config['smtp_server'], port)
                 server.starttls()
+            
+            with server:
                 server.login(self.config['email_from'], self.config['email_password'])
                 server.send_message(msg)
-            
             return True
             
         except Exception as e:
@@ -771,13 +781,63 @@ _此消息由AI股票分析系统自动发送_"""
         except Exception as e:
             print(f"[ERROR] Webhook发送失败: {str(e)}")
             return False
-
+    def send_test_email(self) -> tuple:
+        """供UI调用的测试方法"""
+        subject = "🚀 AI Stock Agent 邮件配置测试"
+        text_body = "这是一封来自 AI Stock Agent 的测试邮件。如果您收到此邮件，说明您的 SMTP 配置完全正确！"
+        html_body = f"""
+        <html>
+            <body>
+                <h2 style="color: #2e7d32;">✅ 邮件通知配置成功</h2>
+                <p>这是一封来自 <b>AI Stock Agent</b> 的测试邮件。</p>
+                <p><b>设备环境：</b> ThinkBook 14 Fedora 43</p>
+                <p><b>发送时间：</b> {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <hr>
+                <p style="color: #666; font-size: 12px;">如果您看到这条消息，说明您的邮件提醒功能已准备就绪。</p>
+            </body>
+        </html>
+        """
+        
+        # 调用你现有的私有方法
+        success = self._send_custom_email(subject, html_body, text_body)
+        
+        if success:
+            return True, "邮件发送成功"
+        else:
+            return False, "邮件发送失败，请检查控制台报错详情"
 # 全局通知服务实例
 notification_service = NotificationService()
 
 
 
+def run_quick_test():
+    """
+    手动触发测试脚本：验证配置并发送测试邮件
+    """
+    # 1. 实例化通知服务（它会自动加载 .env）
+    service = NotificationService()
+    
+    # 2. 打印当前加载的配置状态（隐藏密码）
+    status = service.get_email_config_status()
+    print(f"--- 当前邮件配置状态 ---")
+    for key, value in status.items():
+        print(f"{key}: {value}")
+    
+    if not status['configured']:
+        print("\n❌ 错误：配置不完整，请检查 .env 文件中的 EMAIL_FROM, EMAIL_PASSWORD 等字段。")
+        return
 
+    # 3. 执行发送测试
+    print("\n🚀 正在尝试发送测试邮件到:", status['email_to'])
+    success, message = service.send_test_email()
+    
+    if success:
+        print(f"✅ 成功！{message}")
+    else:
+        print(f"❌ 失败！原因: {message}")
+
+if __name__ == "__main__":
+    run_quick_test()
 
 
 

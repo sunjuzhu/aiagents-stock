@@ -23,14 +23,18 @@ from longhubang_ui import display_longhubang
 from smart_monitor_ui import smart_monitor_ui
 from news_flow_ui import display_news_flow_monitor
 # from detail_page import render_full_detail_page
+import os
 
+# os.environ["HTTP_PROXY"] = "http://127.0.0.1:10808"
+# os.environ["HTTPS_PROXY"] = "http://127.0.0.1:10808"
+config_manager.setup_proxy()
 
 def render_custom_detail_page(record):
     """渲染如图片所示的专业详情页"""
     import json
     
     # 设置页面为宽屏模式（如果主程序没设置的话）
-    st.set_page_config(page_title=f"分析报告-{record['stock_name']}", layout="wide")
+    st.set_page_config(page_title=f"{record['stock_name']}", layout="wide")
 
     # 1. 提取核心决策数据
     final = record.get('final_decision', {})
@@ -2547,8 +2551,51 @@ def display_config_manager():
             )
             st.session_state.temp_config["EMAIL_TO"] = new_email_to
 
+            # if new_email_enabled and all([new_smtp_server, new_email_from, new_email_password, new_email_to]):
+            #     st.success("✅ 邮件配置完整")
+            # elif new_email_enabled:
+            #     st.warning("⚠️ 邮件配置不完整")
+            # else:
+            #     st.info("ℹ️ 邮件通知未启用")
+
+            # st.caption("💡 QQ邮箱授权码获取：设置 → 账户 → POP3/IMAP/SMTP → 生成授权码")
+
+            # --- 新增：邮件测试按钮逻辑 ---
             if new_email_enabled and all([new_smtp_server, new_email_from, new_email_password, new_email_to]):
                 st.success("✅ 邮件配置完整")
+                
+                # 放置测试按钮
+                if st.button("🧪 测试邮件发送", use_container_width=True, key="test_email_btn"):
+                    with st.spinner("正在尝试发送测试邮件..."):
+                        # 1. 备份并临时更新环境变量（确保测试的是当前输入的内容）
+                        mail_keys = ["EMAIL_ENABLED", "SMTP_SERVER", "SMTP_PORT", "EMAIL_FROM", "EMAIL_PASSWORD", "EMAIL_TO"]
+                        temp_env_backup = {key: os.getenv(key) for key in mail_keys}
+                        
+                        for key in mail_keys:
+                            os.environ[key] = str(st.session_state.temp_config.get(key, ""))
+
+                        try:
+                            # 2. 动态导入并发送
+                            from notification_service import NotificationService
+                            temp_notification_service = NotificationService()
+                            # 假设 notification_service 中有 send_test_email 方法
+                            success, message = temp_notification_service.send_test_email()
+
+                            if success:
+                                st.success(f"✅ 发送成功！请检查收件箱（包括垃圾箱）。\n{message}")
+                            else:
+                                st.error(f"❌ 发送失败：{message}")
+                        except Exception as e:
+                            st.error(f"❌ 程序异常: {str(e)}")
+                        finally:
+                            # 3. 恢复环境变量
+                            for key, value in temp_env_backup.items():
+                                if value is not None:
+                                    os.environ[key] = value
+                                elif key in os.environ:
+                                    del os.environ[key]
+            # --- 结束：邮件测试按钮逻辑 ---
+
             elif new_email_enabled:
                 st.warning("⚠️ 邮件配置不完整")
             else:
