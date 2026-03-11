@@ -1,0 +1,155 @@
+{
+    "symbol": "000001",
+    "data_success": true,
+    "lifting_ban": {
+        "has_data": true,
+        "query": "股票代码000001限售解禁列表",
+        "data": [
+            {
+                "解禁股数_选股表格": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "平安银行限售解禁",
+                        "extra": {
+                            "source_key": 1
+                        },
+                        "logid": "d7a5c1c508ee5a9a920049749340720a",
+                        "pid": 7619,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20270311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220270311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=d7a5c1c508ee5a9a920049749340720a&pid=7619&w=%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8C%E9%99%90%E5%94%AE%E8%A7%A3%E7%A6%81"
+                },
+                "解禁股数_回测点评": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "平安银行限售解禁",
+                        "extra": {
+                            "source_key": 2
+                        },
+                        "logid": "d7a5c1c508ee5a9a920049749340720a",
+                        "pid": 10667,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20270311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220270311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=d7a5c1c508ee5a9a920049749340720a&pid=10667&w=%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8C%E9%99%90%E5%94%AE%E8%A7%A3%E7%A6%81"
+                },
+                "解禁股数_事件K线图": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "平安银行限售解禁",
+                        "extra": {
+                            "source_key": 3
+                        },
+                        "logid": "d7a5c1c508ee5a9a920049749340720a",
+                        "pid": 7621,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20270311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220270311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=d7a5c1c508ee5a9a920049749340720a&pid=7621&w=%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8C%E9%99%90%E5%94%AE%E8%A7%A3%E7%A6%81"
+                },
+                "解禁股数_解禁时间表": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "平安银行限售解禁",
+                        "extra": {
+                            "source_key": 4
+                        },
+                        "logid": "d7a5c1c508ee5a9a920049749340720a",
+                        "pid": 9377,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20270311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220270311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=d7a5c1c508ee5a9a920049749340720a&pid=9377&w=%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8C%E9%99%90%E5%94%AE%E8%A7%A3%E7%A6%81"
+                },
+                "解禁股数_公告": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "平安银行限售解禁",
+                        "extra": {
+                            "source_key": 5
+                        },
+                        "logid": "d7a5c1c508ee5a9a920049749340720a",
+                        "pid": 9379,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20270311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220270311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=d7a5c1c508ee5a9a920049749340720a&pid=9379&w=%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8C%E9%99%90%E5%94%AE%E8%A7%A3%E7%A6%81"
+                },
+                "解禁股数_研报": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "平安银行限售解禁",
+                        "extra": {
+                            "source_key": 6
+                        },
+                        "logid": "d7a5c1c508ee5a9a920049749340720a",
+                        "pid": 9381,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20270311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220270311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=d7a5c1c508ee5a9a920049749340720a&pid=9381&w=%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8C%E9%99%90%E5%94%AE%E8%A7%A3%E7%A6%81"
+                },
+                "解禁股数_新闻": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "平安银行限售解禁",
+                        "extra": {
+                            "source_key": 7
+                        },
+                        "logid": "d7a5c1c508ee5a9a920049749340720a",
+                        "pid": 9383,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20270311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220270311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=d7a5c1c508ee5a9a920049749340720a&pid=9383&w=%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8C%E9%99%90%E5%94%AE%E8%A7%A3%E7%A6%81"
+                }
+            }
+        ],
+        "summary": "发现 1 条属于 000001 的解禁记录"
+    },
+    "shareholder_reduction": {
+        "has_data": false,
+        "query": "代码000001的大股东减持公告明细",
+        "data": null,
+        "summary": null
+    },
+    "important_events": {
+        "has_data": true,
+        "query": "代码000001最近一个月重要事项",
+        "data": [
+            {
+                "重要事件共用模块_简单表格": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "代码000001最近一个月重要事项",
+                        "extra": {
+                            "source_key": 1
+                        },
+                        "logid": "434e711c9957c334ce0e9a8f26592cb6",
+                        "pid": 13332,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20260311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220260311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=434e711c9957c334ce0e9a8f26592cb6&pid=13332&w=%E4%BB%A3%E7%A0%81000001%E6%9C%80%E8%BF%91%E4%B8%80%E4%B8%AA%E6%9C%88%E9%87%8D%E8%A6%81%E4%BA%8B%E9%A1%B9"
+                },
+                "重要事件共用模块_事件k线图": {
+                    "meta": {
+                        "codes": "000001",
+                        "codeType": "stock",
+                        "w": "代码000001最近一个月重要事项",
+                        "extra": {
+                            "source_key": 2
+                        },
+                        "logid": "434e711c9957c334ce0e9a8f26592cb6",
+                        "pid": 13333,
+                        "info": "{\"view\":{\"nolazy\":1,\"parseArr\":{\"_v\":\"new\",\"dateRange\":[\"20260311\",\"20260311\"],\"staying\":[],\"queryCompare\":[],\"comparesOfIndex\":[]}}}"
+                    },
+                    "url": "/diag/block-detail?codeType=stock&codes=000001&info=%7B%22view%22%3A%7B%22nolazy%22%3A1%2C%22parseArr%22%3A%7B%22_v%22%3A%22new%22%2C%22dateRange%22%3A%5B%2220260311%22%2C%2220260311%22%5D%2C%22staying%22%3A%5B%5D%2C%22queryCompare%22%3A%5B%5D%2C%22comparesOfIndex%22%3A%5B%5D%7D%7D%7D&logid=434e711c9957c334ce0e9a8f26592cb6&pid=13333&w=%E4%BB%A3%E7%A0%81000001%E6%9C%80%E8%BF%91%E4%B8%80%E4%B8%AA%E6%9C%88%E9%87%8D%E8%A6%81%E4%BA%8B%E9%A1%B9"
+                }
+            }
+        ],
+        "summary": "发现 1 条重要事项"
+    },
+    "error": null
+}

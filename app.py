@@ -22,7 +22,62 @@ from sector_strategy_ui import display_sector_strategy
 from longhubang_ui import display_longhubang
 from smart_monitor_ui import smart_monitor_ui
 from news_flow_ui import display_news_flow_monitor
+# from detail_page import render_full_detail_page
 
+
+def render_custom_detail_page(record):
+    """渲染如图片所示的专业详情页"""
+    import json
+    
+    # 设置页面为宽屏模式（如果主程序没设置的话）
+    st.set_page_config(page_title=f"分析报告-{record['stock_name']}", layout="wide")
+
+    # 1. 提取核心决策数据
+    final = record.get('final_decision', {})
+    agents = record.get('agents_results', {})
+    
+    # 2. 页面标题
+    st.title(f"📊 {record['stock_name']} ({record['symbol']}) 深度分析报告")
+    st.caption(f"分析周期：{record['period']} | 生成时间：{record['analysis_date']}")
+    st.divider()
+
+    # 3. 左右布局
+    col_left, col_right = st.columns([1, 3])
+
+    with col_left:
+        st.subheader("🎯 投资决策")
+        # 评级显示
+        rating = final.get('rating', '持有')
+        st.success(f"**建议操作：{rating}**")
+        
+        # 价格指标
+        st.metric("目标价", final.get('target_price', 'N/A'))
+        st.metric("止损价", final.get('stop_loss', 'N/A'))
+        
+        st.divider()
+        st.write(f"**仓位建议：** {final.get('position_size', '轻仓')}")
+        st.write(f"**持仓周期：** {final.get('holding_period', '2-4周')}")
+        
+        if st.button("🏠 关闭详情"):
+            st.query_params.clear()
+            st.rerun()
+
+    with col_right:
+        # 对应你数据库中的各个 Agent 结果
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 技术分析", "🏢 基本面分析", "💰 资金面分析", "⚠️ 风险管理", "🎙 决策会议纪要"])
+        
+        with tab1:
+            # 提取技术分析师的 analysis 内容
+            st.markdown(agents.get('technical', {}).get('analysis', "无数据"))
+        with tab2:
+            st.markdown(agents.get('fundamental', {}).get('analysis', "无数据"))
+        with tab3:
+            st.markdown(agents.get('fund_flow', {}).get('analysis', "无数据"))
+        with tab4:
+            st.markdown(agents.get('risk_management', {}).get('analysis', "无数据"))
+        with tab5:
+            # 决策会议记录通常存放在 discussion_result 里
+            st.markdown(record.get('discussion_result', "无会议记录"))
 # 页面配置
 st.set_page_config(
     page_title="复合多AI智能体股票团队分析系统",
@@ -268,6 +323,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
+    # 必须有这个拦截逻辑，否则新窗口打开只会显示首页，看不到详情！
+    if "view_id" in st.query_params:
+        v_id = st.query_params["view_id"]
+        record = db.get_record_by_id(v_id) # 这里的 db 是你的数据库实例
+        if record:
+            render_custom_detail_page(record) # 这里的函数名要和你定义的一致
+            return
+   # --- 1. 处理详情页路由 (修复后的代码) ---
+    query_params = st.query_params
+    if "view_id" in query_params:
+        v_id = query_params["view_id"]
+        
+        # 调用类中存在的 get_record_by_id 方法
+        target = db.get_record_by_id(v_id) 
+        
+        if target:
+            render_custom_detail_page(target) # 调用下面的渲染函数
+            return # 停止向下执行主界面内容
+    # --- 路由结束 ---
+
+    st.title("📈 复合多AI智能体股票团队分析系统")
+    # ... 原有代码 ...
     # 顶部标题栏
     st.markdown("""
     <div class="top-nav">
@@ -1740,52 +1817,129 @@ def display_history_records():
         st.warning("🔍 未找到匹配的记录")
         return
 
+    # # 显示记录列表
+    # for record in filtered_records:
+    #     # 根据评级设置颜色和图标
+    #     rating = record.get('rating', '未知')
+    #     rating_color = {
+    #         "买入": "🟢",
+    #         "持有": "🟡",
+    #         "卖出": "🔴",
+    #         "强烈买入": "🟢",
+    #         "强烈卖出": "🔴"
+    #     }.get(rating, "⚪")
+
+    #     with st.expander(f"{rating_color} {record['stock_name']} ({record['symbol']}) - {record['analysis_date']}"):
+    #         col1, col2, col3, col4 = st.columns([1, 1, 1, 2.5])
+
+    #         with col1:
+    #             st.write(f"**股票代码:** {record['symbol']}")
+    #             st.write(f"**股票名称:** {record['stock_name']}")
+
+    #         with col2:
+    #             st.write(f"**分析时间:** {record['analysis_date']}")
+    #             st.write(f"**数据周期:** {record['period']}")
+    #             st.write(f"**投资评级:** **{rating}**")
+
+    #         # with col3:
+    #         #     if st.button("👀 查看详情", key=f"view_{record['id']}"):
+    #         #         st.session_state.viewing_record_id = record['id']
+
+    #         with col3:
+    #     # 构造 URL 参数
+    #             detail_url = f"/?view_id={record['id']}"
+                
+    #             # 渲染为一个看起来像按钮的超链接，target="_blank" 代表新窗口打开
+    #             st.markdown(f"""
+    #                 <a href="{detail_url}" target="_blank" style="text-decoration: none;">
+    #                     <div style="
+    #                         background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
+    #                         color: white;
+    #                         padding: 10px 20px;
+    #                         border-radius: 10px;
+    #                         text-align: center;
+    #                         font-weight: bold;
+    #                         cursor: pointer;
+    #                         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    #                     ">
+    #                         👀 查看详情
+    #                     </div>
+    #                 </a>
+    #             """, unsafe_allow_html=True)
+
+    #         with col4:
+    #             if st.button("➕ 监测", key=f"add_monitor_{record['id']}"):
+    #                 st.session_state.add_to_monitor_id = record['id']
+    #                 st.session_state.viewing_record_id = record['id']
+
+    #         # 删除按钮（新增一行）
+    #         col5, _, _, _ = st.columns(4)
+    #         with col5:
+    #             if st.button("🗑️ 删除", key=f"delete_{record['id']}"):
+    #                 if db.delete_record(record['id']):
+    #                     st.success("✅ 记录已删除")
+    #                     st.rerun()
+    #                 else:
+    #                     st.error("❌ 删除失败")
     # 显示记录列表
     for record in filtered_records:
-        # 根据评级设置颜色和图标
         rating = record.get('rating', '未知')
-        rating_color = {
-            "买入": "🟢",
-            "持有": "🟡",
-            "卖出": "🔴",
-            "强烈买入": "🟢",
-            "强烈卖出": "🔴"
-        }.get(rating, "⚪")
+        rating_color = {"买入": "🟢", "持有": "🟡", "卖出": "🔴"}.get(rating[:2], "⚪")
 
         with st.expander(f"{rating_color} {record['stock_name']} ({record['symbol']}) - {record['analysis_date']}"):
-            col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+            # 重新调整比例，让按钮和文字分布更均匀
+            col1, col2, col3, col4 = st.columns([1.2, 1.2, 1.5, 1.2])
 
             with col1:
-                st.write(f"**股票代码:** {record['symbol']}")
-                st.write(f"**股票名称:** {record['stock_name']}")
+                st.markdown(f"**代码:** `{record['symbol']}`")
+                st.markdown(f"**名称:** {record['stock_name']}")
 
             with col2:
-                st.write(f"**分析时间:** {record['analysis_date']}")
-                st.write(f"**数据周期:** {record['period']}")
-                st.write(f"**投资评级:** **{rating}**")
+                st.markdown(f"**周期:** {record['period']}")
+                st.markdown(f"**评级:** **{rating}**")
 
             with col3:
-                if st.button("👀 查看详情", key=f"view_{record['id']}"):
-                    st.session_state.viewing_record_id = record['id']
+                # 构造 URL。注意：如果你在本地运行，建议直接用相对路径 "/?view_id="
+                detail_url = f"/?view_id={record['id']}"
+                st.markdown(f"""
+                    <a href="{detail_url}" target="_blank" style="text-decoration: none;">
+                        <div style="
+                            background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
+                            color: white;
+                            padding: 8px 5px;
+                            border-radius: 8px;
+                            text-align: center;
+                            font-size: 14px;
+                            font-weight: bold;
+                            box-shadow: 0 4px 10px rgba(110, 142, 251, 0.3);
+                        ">
+                            🔎 查看全屏报告
+                        </div>
+                    </a>
+                """, unsafe_allow_html=True)
 
             with col4:
-                if st.button("➕ 监测", key=f"add_monitor_{record['id']}"):
+                # 这里的按钮会自动垂直居中对齐
+                if st.button("➕ 加入监测", key=f"add_monitor_{record['id']}", use_container_width=True):
                     st.session_state.add_to_monitor_id = record['id']
-                    st.session_state.viewing_record_id = record['id']
+                    st.success(f"已加入监测列表")
 
-            # 删除按钮（新增一行）
-            col5, _, _, _ = st.columns(4)
-            with col5:
-                if st.button("🗑️ 删除", key=f"delete_{record['id']}"):
+            # --- 下方功能小行 ---
+            st.write("") # 增加一点间距
+            sub_col1, sub_col2, _ = st.columns([1, 1, 4])
+            with sub_col1:
+                st.caption(f"分析时间: {record['analysis_date']}")
+            with sub_col2:
+                # 删除按钮放在这里，不会误触，且不占用主行空间
+                if st.button("🗑️ 删除记录", key=f"delete_{record['id']}", help="永久删除此条记录"):
                     if db.delete_record(record['id']):
-                        st.success("✅ 记录已删除")
                         st.rerun()
-                    else:
-                        st.error("❌ 删除失败")
 
     # 查看详细记录
     if 'viewing_record_id' in st.session_state:
         display_record_detail(st.session_state.viewing_record_id)
+
+
 
 def display_add_to_monitor_dialog(record):
     """显示加入监测的对话框"""
