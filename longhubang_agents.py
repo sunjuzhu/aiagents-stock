@@ -3,7 +3,7 @@
 专注于龙虎榜数据的多维度分析
 """
 
-from deepseek_client import DeepSeekClient
+from llm_client import LLMClient
 from typing import Dict, Any, List
 import time
 import config
@@ -14,7 +14,7 @@ class LonghubangAgents:
     
     def __init__(self, model=None):
         self.model = model or config.DEFAULT_MODEL_NAME
-        self.deepseek_client = DeepSeekClient(model=self.model)
+        self.llm_client = LLMClient(model=self.model)
         print(f"[智瞰龙虎] AI分析师系统初始化 (模型: {self.model})")
     
     def youzi_behavior_analyst(self, longhubang_data: str, summary: Dict) -> Dict[str, Any]:
@@ -103,7 +103,7 @@ class LonghubangAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 游资行为分析师分析完成")
         
@@ -204,7 +204,7 @@ class LonghubangAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 个股潜力分析师分析完成")
         
@@ -304,7 +304,7 @@ class LonghubangAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 题材追踪分析师分析完成")
         
@@ -399,7 +399,7 @@ class LonghubangAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 风险控制专家分析完成")
         
@@ -494,7 +494,7 @@ class LonghubangAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=5000)
+        analysis = self.llm_client.call_api(messages, max_tokens=5000)
         
         print("  ✓ 首席策略师分析完成")
         

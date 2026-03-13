@@ -256,7 +256,7 @@ class NewsFlowScheduler:
             
             if result.get('success'):
                 snapshot_id = result.get('snapshot_id')
-                advice = result.get('ai_analysis', {}).get('investment_advice', {}).get('advice', 'N/A')
+                advice = result.get('ai_analysis', {}).get('investment_advice', {}).get('advice', None)
                 message = f"深度分析完成，建议：{advice}"
                 self._log_task(task_name, task_type, 'success', message, duration, snapshot_id)
                 logger.info(f"[新闻流量] {task_name}完成: {message}")

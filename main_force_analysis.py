@@ -10,7 +10,7 @@ import pandas as pd
 from main_force_selector import main_force_selector
 from stock_data import StockDataFetcher
 from ai_agents import StockAnalysisAgents
-from deepseek_client import DeepSeekClient
+from llm_client import LLMClient
 import time
 import json
 import config
@@ -23,7 +23,7 @@ class MainForceAnalyzer:
         self.fetcher = StockDataFetcher()
         self.model = model or config.DEFAULT_MODEL_NAME
         self.agents = StockAnalysisAgents(model=self.model)
-        self.deepseek_client = self.agents.deepseek_client
+        self.llm_client = self.agents.llm_client
         self.raw_stocks = None
         self.final_recommendations = []
     
@@ -226,7 +226,7 @@ class MainForceAnalyzer:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✅ 资金流向整体分析完成")
         time.sleep(1)
@@ -280,7 +280,7 @@ class MainForceAnalyzer:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✅ 行业板块整体分析完成")
         time.sleep(1)
@@ -334,7 +334,7 @@ class MainForceAnalyzer:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✅ 财务基本面整体分析完成")
         time.sleep(1)
@@ -478,7 +478,7 @@ class MainForceAnalyzer:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.deepseek_client.call_api(messages, max_tokens=4000)
+            response = self.llm_client.call_api(messages, max_tokens=4000)
             
             # 解析JSON响应
             import re
@@ -520,11 +520,11 @@ class MainForceAnalyzer:
             for i, (idx, row) in enumerate(sorted_df.iterrows(), 1):
                 recommendations.append({
                     'rank': i,
-                    'symbol': row.get('股票代码', 'N/A'),
-                    'name': row.get('股票简称', 'N/A'),
+                    'symbol': row.get('股票代码', None),
+                    'name': row.get('股票简称', None),
                     'reasons': [
                         f"主力资金净流入较多",
-                        f"所属行业: {row.get('所属同花顺行业', 'N/A')}",
+                        f"所属行业: {row.get('所属同花顺行业', None)}",
                         f"涨跌幅适中"
                     ],
                     'highlights': '主力资金持续关注',
@@ -554,10 +554,10 @@ class MainForceAnalyzer:
             for reason in rec.get('reasons', []):
                 print(f"   • {reason}")
             
-            print(f"\n💡 投资亮点: {rec.get('highlights', 'N/A')}")
-            print(f"⚠️  风险提示: {rec.get('risks', 'N/A')}")
-            print(f"📊 建议仓位: {rec.get('position', 'N/A')}")
-            print(f"⏰ 投资周期: {rec.get('investment_period', 'N/A')}")
+            print(f"\n💡 投资亮点: {rec.get('highlights', None)}")
+            print(f"⚠️  风险提示: {rec.get('risks', None)}")
+            print(f"📊 建议仓位: {rec.get('position', None)}")
+            print(f"⏰ 投资周期: {rec.get('investment_period', None)}")
             print(f"{'='*80}\n")
 
 # 全局实例

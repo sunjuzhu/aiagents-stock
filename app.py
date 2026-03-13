@@ -24,9 +24,6 @@ from smart_monitor_ui import smart_monitor_ui
 from news_flow_ui import display_news_flow_monitor
 # from detail_page import render_full_detail_page
 import os
-
-# os.environ["HTTP_PROXY"] = "http://127.0.0.1:10808"
-# os.environ["HTTPS_PROXY"] = "http://127.0.0.1:10808"
 config_manager.setup_proxy()
 
 def render_custom_detail_page(record):
@@ -55,8 +52,8 @@ def render_custom_detail_page(record):
         st.success(f"**建议操作：{rating}**")
         
         # 价格指标
-        st.metric("目标价", final.get('target_price', 'N/A'))
-        st.metric("止损价", final.get('stop_loss', 'N/A'))
+        st.metric("目标价", final.get('target_price', None))
+        st.metric("止损价", final.get('stop_loss', None))
         
         st.divider()
         st.write(f"**仓位建议：** {final.get('position_size', '轻仓')}")
@@ -875,7 +872,7 @@ def check_api_key():
     """检查API密钥是否配置"""
     try:
         import config
-        return bool(config.DEEPSEEK_API_KEY and config.DEEPSEEK_API_KEY.strip())
+        return bool(config.API_KEY and config.API_KEY.strip())
     except:
         return False
 
@@ -1453,32 +1450,32 @@ def run_stock_analysis(symbol, period):
 
 def display_stock_info(stock_info, indicators):
     """显示股票基本信息"""
-    st.subheader(f"📊 {stock_info.get('name', 'N/A')} ({stock_info.get('symbol', 'N/A')})")
+    st.subheader(f"📊 {stock_info.get('name', None)} ({stock_info.get('symbol', None)})")
 
     # 基本信息卡片
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        current_price = stock_info.get('current_price', 'N/A')
+        current_price = stock_info.get('current_price', None)
         st.metric("当前价格", f"{current_price}")
 
     with col2:
-        change_percent = stock_info.get('change_percent', 'N/A')
+        change_percent = stock_info.get('change_percent', None)
         if isinstance(change_percent, (int, float)):
             st.metric("涨跌幅", f"{change_percent:.2f}%", f"{change_percent:.2f}%")
         else:
             st.metric("涨跌幅", f"{change_percent}")
 
     with col3:
-        pe_ratio = stock_info.get('pe_ratio', 'N/A')
+        pe_ratio = stock_info.get('pe_ratio', None)
         st.metric("市盈率", f"{pe_ratio}")
 
     with col4:
-        pb_ratio = stock_info.get('pb_ratio', 'N/A')
+        pb_ratio = stock_info.get('pb_ratio', None)
         st.metric("市净率", f"{pb_ratio}")
 
     with col5:
-        market_cap = stock_info.get('market_cap', 'N/A')
+        market_cap = stock_info.get('market_cap', None)
         if isinstance(market_cap, (int, float)):
             market_cap_str = f"{market_cap/1e9:.2f}B" if market_cap > 1e9 else f"{market_cap/1e6:.2f}M"
             st.metric("市值", market_cap_str)
@@ -1492,7 +1489,7 @@ def display_stock_info(stock_info, indicators):
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            rsi = indicators.get('rsi', 'N/A')
+            rsi = indicators.get('rsi', None)
             if isinstance(rsi, (int, float)):
                 rsi_color = "normal"
                 if rsi > 70:
@@ -1504,21 +1501,21 @@ def display_stock_info(stock_info, indicators):
                 st.metric("RSI", f"{rsi}")
 
         with col2:
-            ma20 = indicators.get('ma20', 'N/A')
+            ma20 = indicators.get('ma20', None)
             if isinstance(ma20, (int, float)):
                 st.metric("MA20", f"{ma20:.2f}")
             else:
                 st.metric("MA20", f"{ma20}")
 
         with col3:
-            volume_ratio = indicators.get('volume_ratio', 'N/A')
+            volume_ratio = indicators.get('volume_ratio', None)
             if isinstance(volume_ratio, (int, float)):
                 st.metric("量比", f"{volume_ratio:.2f}")
             else:
                 st.metric("量比", f"{volume_ratio}")
 
         with col4:
-            macd = indicators.get('macd', 'N/A')
+            macd = indicators.get('macd', None)
             if isinstance(macd, (int, float)):
                 st.metric("MACD", f"{macd:.4f}")
             else:
@@ -1584,7 +1581,7 @@ def display_stock_chart(stock_data, stock_info):
         ))
 
     fig.update_layout(
-        title=f"{stock_info.get('name', 'N/A')} 股价走势",
+        title=f"{stock_info.get('name', None)} 股价走势",
         xaxis_title="日期",
         yaxis_title="价格",
         height=500,
@@ -1683,13 +1680,13 @@ def display_final_decision(final_decision, stock_info, agents_results=None, disc
             """, unsafe_allow_html=True)
 
             # 关键指标
-            confidence = final_decision.get('confidence_level', 'N/A')
+            confidence = final_decision.get('confidence_level', None)
             st.metric("信心度", f"{confidence}/10")
 
-            target_price = final_decision.get('target_price', 'N/A')
+            target_price = final_decision.get('target_price', None)
             st.metric("目标价格", f"{target_price}")
 
-            position_size = final_decision.get('position_size', 'N/A')
+            position_size = final_decision.get('position_size', None)
             st.metric("建议仓位", f"{position_size}")
 
         with col2:
@@ -1701,12 +1698,12 @@ def display_final_decision(final_decision, stock_info, agents_results=None, disc
             col2_1, col2_2 = st.columns(2)
 
             with col2_1:
-                st.write(f"**进场区间:** {final_decision.get('entry_range', 'N/A')}")
-                st.write(f"**止盈位:** {final_decision.get('take_profit', 'N/A')}")
+                st.write(f"**进场区间:** {final_decision.get('entry_range', None)}")
+                st.write(f"**止盈位:** {final_decision.get('take_profit', None)}")
 
             with col2_2:
-                st.write(f"**止损位:** {final_decision.get('stop_loss', 'N/A')}")
-                st.write(f"**持有周期:** {final_decision.get('holding_period', 'N/A')}")
+                st.write(f"**止损位:** {final_decision.get('stop_loss', None)}")
+                st.write(f"**持有周期:** {final_decision.get('holding_period', None)}")
 
         # 风险提示
         risk_warning = final_decision.get('risk_warning', '')
@@ -1772,7 +1769,7 @@ def show_example_interface():
         - NVDA (英伟达)
         """)
 
-    st.info("💡 提示：首次运行需要配置DeepSeek API Key，请在.env中设置DEEPSEEK_API_KEY")
+    st.info("💡 提示：首次运行需要配置DeepSeek API Key，请在.env中设置API_KEY")
 
     st.markdown("---")
     st.markdown("""
@@ -1955,12 +1952,12 @@ def display_add_to_monitor_dialog(record):
     # 从final_decision中提取关键数据
     if isinstance(final_decision, dict):
         # 解析进场区间
-        entry_range_str = final_decision.get('entry_range', 'N/A')
+        entry_range_str = final_decision.get('entry_range', None)
         entry_min = 0.0
         entry_max = 0.0
 
         # 尝试解析进场区间字符串，支持多种格式
-        if entry_range_str and entry_range_str != 'N/A':
+        if entry_range_str and entry_range_str != None:
             try:
                 import re
                 # 移除常见的前缀和单位
@@ -1987,14 +1984,14 @@ def display_add_to_monitor_dialog(record):
                     pass
 
         # 提取止盈和止损
-        take_profit_str = final_decision.get('take_profit', 'N/A')
-        stop_loss_str = final_decision.get('stop_loss', 'N/A')
+        take_profit_str = final_decision.get('take_profit', None)
+        stop_loss_str = final_decision.get('stop_loss', None)
 
         take_profit = 0.0
         stop_loss = 0.0
 
         # 解析止盈位
-        if take_profit_str and take_profit_str != 'N/A':
+        if take_profit_str and take_profit_str != None:
             try:
                 import re
                 # 移除单位和符号
@@ -2007,7 +2004,7 @@ def display_add_to_monitor_dialog(record):
                 pass
 
         # 解析止损位
-        if stop_loss_str and stop_loss_str != 'N/A':
+        if stop_loss_str and stop_loss_str != None:
             try:
                 import re
                 # 移除单位和符号
@@ -2147,26 +2144,26 @@ def display_record_detail(record_id):
         col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
-            current_price = stock_info.get('current_price', 'N/A')
+            current_price = stock_info.get('current_price', None)
             st.metric("当前价格", f"{current_price}")
 
         with col2:
-            change_percent = stock_info.get('change_percent', 'N/A')
+            change_percent = stock_info.get('change_percent', None)
             if isinstance(change_percent, (int, float)):
                 st.metric("涨跌幅", f"{change_percent:.2f}%", f"{change_percent:.2f}%")
             else:
                 st.metric("涨跌幅", f"{change_percent}")
 
         with col3:
-            pe_ratio = stock_info.get('pe_ratio', 'N/A')
+            pe_ratio = stock_info.get('pe_ratio', None)
             st.metric("市盈率", f"{pe_ratio}")
 
         with col4:
-            pb_ratio = stock_info.get('pb_ratio', 'N/A')
+            pb_ratio = stock_info.get('pb_ratio', None)
             st.metric("市净率", f"{pb_ratio}")
 
         with col5:
-            market_cap = stock_info.get('market_cap', 'N/A')
+            market_cap = stock_info.get('market_cap', None)
             if isinstance(market_cap, (int, float)):
                 market_cap_str = f"{market_cap/1e9:.2f}B" if market_cap > 1e9 else f"{market_cap/1e6:.2f}M"
                 st.metric("市值", market_cap_str)
@@ -2231,13 +2228,13 @@ def display_record_detail(record_id):
                 </div>
                 """, unsafe_allow_html=True)
 
-                confidence = final_decision.get('confidence_level', 'N/A')
+                confidence = final_decision.get('confidence_level', None)
                 st.metric("信心度", f"{confidence}/10")
 
-                target_price = final_decision.get('target_price', 'N/A')
+                target_price = final_decision.get('target_price', None)
                 st.metric("目标价格", f"{target_price}")
 
-                position_size = final_decision.get('position_size', 'N/A')
+                position_size = final_decision.get('position_size', None)
                 st.metric("建议仓位", f"{position_size}")
 
             with col2:
@@ -2248,12 +2245,12 @@ def display_record_detail(record_id):
                 col2_1, col2_2 = st.columns(2)
 
                 with col2_1:
-                    st.write(f"**进场区间:** {final_decision.get('entry_range', 'N/A')}")
-                    st.write(f"**止盈位:** {final_decision.get('take_profit', 'N/A')}")
+                    st.write(f"**进场区间:** {final_decision.get('entry_range', None)}")
+                    st.write(f"**止盈位:** {final_decision.get('take_profit', None)}")
 
                 with col2_2:
-                    st.write(f"**止损位:** {final_decision.get('stop_loss', 'N/A')}")
-                    st.write(f"**持有周期:** {final_decision.get('holding_period', 'N/A')}")
+                    st.write(f"**止损位:** {final_decision.get('stop_loss', None)}")
+                    st.write(f"**持有周期:** {final_decision.get('holding_period', None)}")
         else:
             decision_text = final_decision.get('decision_text', str(final_decision))
             st.write(decision_text)
@@ -2313,17 +2310,17 @@ def display_config_manager():
         st.markdown("阿里:https://dashscope.aliyuncs.com/compatible-mode/v1")
 
     # DeepSeek API Key
-        api_key_info = config_info["DEEPSEEK_API_KEY"]
-        current_api_key = st.session_state.temp_config.get("DEEPSEEK_API_KEY", "")
+        api_key_info = config_info["API_KEY"]
+        current_api_key = st.session_state.temp_config.get("API_KEY", "")
 
         new_api_key = st.text_input(
             f"🔑 {api_key_info['description']} {'*' if api_key_info['required'] else ''}",
             value=current_api_key,
             type="password",
             help="从 https://platform.deepseek.com 获取API密钥",
-            key="input_deepseek_api_key"
+            key="input_API_KEY"
         )
-        st.session_state.temp_config["DEEPSEEK_API_KEY"] = new_api_key
+        st.session_state.temp_config["API_KEY"] = new_api_key
 
         # 显示当前状态
         if new_api_key:
@@ -2335,16 +2332,16 @@ def display_config_manager():
         st.markdown("---")
 
         # DeepSeek Base URL
-        base_url_info = config_info["DEEPSEEK_BASE_URL"]
-        current_base_url = st.session_state.temp_config.get("DEEPSEEK_BASE_URL", "")
+        base_url_info = config_info["BASE_URL"]
+        current_base_url = st.session_state.temp_config.get("BASE_URL", "")
 
         new_base_url = st.text_input(
             f"🌐 {base_url_info['description']}",
             value=current_base_url,
             help="一般无需修改，保持默认即可",
-            key="input_deepseek_base_url"
+            key="input_BASE_URL"
         )
-        st.session_state.temp_config["DEEPSEEK_BASE_URL"] = new_base_url
+        st.session_state.temp_config["BASE_URL"] = new_base_url
 
         st.markdown("---")
 
@@ -2757,8 +2754,8 @@ def display_config_manager():
 # 由系统自动生成和管理
 
 # ========== DeepSeek API配置 ==========
-DEEPSEEK_API_KEY="{current_config.get('DEEPSEEK_API_KEY', '')}"
-DEEPSEEK_BASE_URL="{current_config.get('DEEPSEEK_BASE_URL', '')}"
+API_KEY="{current_config.get('API_KEY', '')}"
+BASE_URL="{current_config.get('BASE_URL', '')}"
 
 # ========== Tushare数据接口（可选）==========
 TUSHARE_TOKEN="{current_config.get('TUSHARE_TOKEN', '')}"
@@ -2824,7 +2821,7 @@ def display_batch_analysis_results(results, period):
         with st.expander(f"⚠️ 查看分析成功但保存失败的 {len(save_failed_results)} 只股票", expanded=False):
             for result in save_failed_results:
                 db_error = result.get('db_error', '未知错误')
-                st.warning(f"**{result['symbol']} - {result['stock_info'].get('name', 'N/A')}**: {db_error}")
+                st.warning(f"**{result['symbol']} - {result['stock_info'].get('name', None)}**: {db_error}")
 
     # 成功的股票分析结果
     if not success_results:
@@ -2861,27 +2858,27 @@ def display_comparison_table(results):
 
         # 解析评级
         if isinstance(final_decision, dict):
-            rating = final_decision.get('rating', 'N/A')
-            confidence = final_decision.get('confidence_level', 'N/A')
-            target_price = final_decision.get('target_price', 'N/A')
+            rating = final_decision.get('rating', None)
+            confidence = final_decision.get('confidence_level', None)
+            target_price = final_decision.get('target_price', None)
         else:
-            rating = 'N/A'
-            confidence = 'N/A'
-            target_price = 'N/A'
+            rating = None
+            confidence = None
+            target_price = None
 
         # 确保信心度为字符串类型，避免类型混合导致的序列化错误
         if isinstance(confidence, (int, float)):
             confidence = str(confidence)
 
         row = {
-            '股票代码': stock_info.get('symbol', 'N/A'),
-            '股票名称': stock_info.get('name', 'N/A'),
-            '当前价格': stock_info.get('current_price', 'N/A'),
-            '涨跌幅(%)': stock_info.get('change_percent', 'N/A'),
-            '市盈率': stock_info.get('pe_ratio', 'N/A'),
-            '市净率': stock_info.get('pb_ratio', 'N/A'),
-            'RSI': indicators.get('rsi', 'N/A'),
-            'MACD': indicators.get('macd', 'N/A'),
+            '股票代码': stock_info.get('symbol', None),
+            '股票名称': stock_info.get('name', None),
+            '当前价格': stock_info.get('current_price', None),
+            '涨跌幅(%)': stock_info.get('change_percent', None),
+            '市盈率': stock_info.get('pe_ratio', None),
+            '市净率': stock_info.get('pb_ratio', None),
+            'RSI': indicators.get('rsi', None),
+            'MACD': indicators.get('macd', None),
             '投资评级': rating,
             '信心度': confidence,
             '目标价格': target_price

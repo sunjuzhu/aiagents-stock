@@ -169,7 +169,7 @@ class StockMonitorService:
             stock_info = self.fetcher.get_stock_info(symbol)
             current_price = stock_info.get('current_price')
             
-            if current_price and current_price != 'N/A':
+            if current_price and current_price != None:
                 return float(current_price)
             return None
         except Exception as e:

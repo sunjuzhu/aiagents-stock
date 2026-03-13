@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 # DeepSeek API配置
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+API_KEY = os.getenv("API_KEY", "")
+BASE_URL = os.getenv("BASE_URL", "https://api.deepseek.com/v1")
 
 # 默认AI模型名称（支持任何OpenAI兼容的模型）
 DEFAULT_MODEL_NAME = os.getenv("DEFAULT_MODEL_NAME", "deepseek-chat")

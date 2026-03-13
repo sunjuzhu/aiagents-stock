@@ -22,15 +22,15 @@ def generate_markdown_report(stock_info, agents_results, discussion_result, fina
 
 | 项目 | 值 |
 |------|-----|
-| **股票代码** | {stock_info.get('symbol', 'N/A')} |
-| **股票名称** | {stock_info.get('name', 'N/A')} |
-| **当前价格** | {stock_info.get('current_price', 'N/A')} |
-| **涨跌幅** | {stock_info.get('change_percent', 'N/A')}% |
-| **市盈率(PE)** | {stock_info.get('pe_ratio', 'N/A')} |
-| **市净率(PB)** | {stock_info.get('pb_ratio', 'N/A')} |
-| **市值** | {stock_info.get('market_cap', 'N/A')} |
-| **市场** | {stock_info.get('market', 'N/A')} |
-| **交易所** | {stock_info.get('exchange', 'N/A')} |
+| **股票代码** | {stock_info.get('symbol', None)} |
+| **股票名称** | {stock_info.get('name', None)} |
+| **当前价格** | {stock_info.get('current_price', None)} |
+| **涨跌幅** | {stock_info.get('change_percent', None)}% |
+| **市盈率(PE)** | {stock_info.get('pe_ratio', None)} |
+| **市净率(PB)** | {stock_info.get('pb_ratio', None)} |
+| **市值** | {stock_info.get('market_cap', None)} |
+| **市场** | {stock_info.get('market', None)} |
+| **交易所** | {stock_info.get('exchange', None)} |
 
 ---
 
@@ -82,21 +82,21 @@ def generate_markdown_report(stock_info, agents_results, discussion_result, fina
         markdown_content += f"""
 **投资评级**: {final_decision.get('rating', '未知')}
 
-**目标价位**: {final_decision.get('target_price', 'N/A')}
+**目标价位**: {final_decision.get('target_price', None)}
 
 **操作建议**: {final_decision.get('operation_advice', '暂无建议')}
 
-**进场区间**: {final_decision.get('entry_range', 'N/A')}
+**进场区间**: {final_decision.get('entry_range', None)}
 
-**止盈位**: {final_decision.get('take_profit', 'N/A')}
+**止盈位**: {final_decision.get('take_profit', None)}
 
-**止损位**: {final_decision.get('stop_loss', 'N/A')}
+**止损位**: {final_decision.get('stop_loss', None)}
 
-**持有周期**: {final_decision.get('holding_period', 'N/A')}
+**持有周期**: {final_decision.get('holding_period', None)}
 
-**仓位建议**: {final_decision.get('position_size', 'N/A')}
+**仓位建议**: {final_decision.get('position_size', None)}
 
-**信心度**: {final_decision.get('confidence_level', 'N/A')}/10
+**信心度**: {final_decision.get('confidence_level', None)}/10
 
 **风险提示**: {final_decision.get('risk_warning', '无')}
 """

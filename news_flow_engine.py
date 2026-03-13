@@ -611,10 +611,10 @@ if __name__ == "__main__":
         
         if result.get('sentiment_data'):
             sentiment = result['sentiment_data'].get('sentiment', {})
-            print(f"\n情绪指数: {sentiment.get('sentiment_index', 'N/A')}")
-            print(f"情绪分类: {sentiment.get('sentiment_class', 'N/A')}")
+            print(f"\n情绪指数: {sentiment.get('sentiment_index', None)}")
+            print(f"情绪分类: {sentiment.get('sentiment_class', None)}")
             
             flow_stage = result['sentiment_data'].get('flow_stage', {})
-            print(f"流量阶段: {flow_stage.get('stage_name', 'N/A')}")
+            print(f"流量阶段: {flow_stage.get('stage_name', None)}")
     else:
         print(f"❌ 分析失败: {result.get('error')}")

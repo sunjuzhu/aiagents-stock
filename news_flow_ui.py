@@ -170,9 +170,9 @@ def display_dashboard():
         cols[0].metric("运行状态", "运行中" if scheduler.get('running') else "已停止")
         
         next_runs = scheduler.get('next_run_times', {})
-        cols[1].caption(f"热点同步: {next_runs.get('sync_hotspots', 'N/A')[:16] if next_runs.get('sync_hotspots') else 'N/A'}")
-        cols[2].caption(f"预警生成: {next_runs.get('generate_alerts', 'N/A')[:16] if next_runs.get('generate_alerts') else 'N/A'}")
-        cols[3].caption(f"深度分析: {next_runs.get('deep_analysis', 'N/A')[:16] if next_runs.get('deep_analysis') else 'N/A'}")
+        cols[1].caption(f"热点同步: {next_runs.get('sync_hotspots', None)[:16] if next_runs.get('sync_hotspots') else None}")
+        cols[2].caption(f"预警生成: {next_runs.get('generate_alerts', None)[:16] if next_runs.get('generate_alerts') else None}")
+        cols[3].caption(f"深度分析: {next_runs.get('deep_analysis', None)[:16] if next_runs.get('deep_analysis') else None}")
 
 
 def display_wordcloud_and_top_news():
@@ -491,7 +491,7 @@ def display_analysis_results(result: dict):
             flow_type = model_data.get('flow_type', {})
             if flow_type.get('characteristics'):
                 st.caption(f"特征: {', '.join(flow_type.get('characteristics', [])[:2])}")
-                st.caption(f"时间窗口: {flow_type.get('time_window', 'N/A')}")
+                st.caption(f"时间窗口: {flow_type.get('time_window', None)}")
         
         # 情绪分析
         st.markdown("#### 💭 情绪分析")
@@ -1037,18 +1037,18 @@ def display_history_records():
                     sentiment = detail.get('sentiment')
                     if sentiment:
                         st.markdown("**情绪分析**")
-                        st.markdown(f"- 情绪指数: {sentiment.get('sentiment_index', 'N/A')}")
-                        st.markdown(f"- 情绪分类: {sentiment.get('sentiment_class', 'N/A')}")
-                        st.markdown(f"- 流量阶段: {sentiment.get('flow_stage', 'N/A')}")
+                        st.markdown(f"- 情绪指数: {sentiment.get('sentiment_index', None)}")
+                        st.markdown(f"- 情绪分类: {sentiment.get('sentiment_class', None)}")
+                        st.markdown(f"- 流量阶段: {sentiment.get('flow_stage', None)}")
                 
                 with col2:
                     # AI分析
                     ai = detail.get('ai_analysis')
                     if ai:
                         st.markdown("**AI分析结果**")
-                        st.markdown(f"- 投资建议: {ai.get('advice', 'N/A')}")
-                        st.markdown(f"- 置信度: {ai.get('confidence', 'N/A')}%")
-                        st.markdown(f"- 风险等级: {ai.get('risk_level', 'N/A')}")
+                        st.markdown(f"- 投资建议: {ai.get('advice', None)}")
+                        st.markdown(f"- 置信度: {ai.get('confidence', None)}%")
+                        st.markdown(f"- 风险等级: {ai.get('risk_level', None)}")
                         
                         if ai.get('summary'):
                             st.caption(ai['summary'][:100] + "...")
@@ -1070,9 +1070,9 @@ def display_history_records():
     if ai_history:
         df = pd.DataFrame([{
             '时间': a.get('created_at', '')[:16],
-            '建议': a.get('advice', 'N/A'),
+            '建议': a.get('advice', None),
             '置信度': f"{a.get('confidence', 0)}%",
-            '风险': a.get('risk_level', 'N/A'),
+            '风险': a.get('risk_level', None),
             '摘要': (a.get('summary', '') or '')[:30] + "...",
         } for a in ai_history])
         

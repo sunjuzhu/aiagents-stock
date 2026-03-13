@@ -107,12 +107,12 @@ if len(data) > 0:
     latest = data[-1]
     print(f"\n   最新K线数据:")
     # 支持两种字段名格式：小写和大写
-    print(f"   - 日期: {latest.get('date') or latest.get('Time', 'N/A')}")
-    print(f"   - 开盘: {latest.get('open') or latest.get('Open', 'N/A')}")
-    print(f"   - 收盘: {latest.get('close') or latest.get('Close', 'N/A')}")
-    print(f"   - 最高: {latest.get('high') or latest.get('High', 'N/A')}")
-    print(f"   - 最低: {latest.get('low') or latest.get('Low', 'N/A')}")
-    print(f"   - 成交量: {latest.get('volume') or latest.get('Volume', 'N/A')}")
+    print(f"   - 日期: {latest.get('date') or latest.get('Time', None)}")
+    print(f"   - 开盘: {latest.get('open') or latest.get('Open', None)}")
+    print(f"   - 收盘: {latest.get('close') or latest.get('Close', None)}")
+    print(f"   - 最高: {latest.get('high') or latest.get('High', None)}")
+    print(f"   - 最低: {latest.get('low') or latest.get('Low', None)}")
+    print(f"   - 成交量: {latest.get('volume') or latest.get('Volume', None)}")
 
 # 检查数据量是否足够计算MA20
 if len(data) >= 20:

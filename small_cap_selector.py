@@ -96,17 +96,17 @@ class SmallCapSelector:
         
         lines = []
         for idx, row in df.iterrows():
-            stock_code = row.get('股票代码', 'N/A')
-            stock_name = row.get('股票简称', 'N/A')
-            market_cap = row.get('总市值', row.get('总市值[20241211]', 'N/A'))
-            revenue_growth = row.get('营收增长率', row.get('营业收入增长率', 'N/A'))
-            profit_growth = row.get('净利润增长率', row.get('净利润同比增长率', 'N/A'))
+            stock_code = row.get('股票代码', None)
+            stock_name = row.get('股票简称', None)
+            market_cap = row.get('总市值', row.get('总市值[20241211]', None))
+            revenue_growth = row.get('营收增长率', row.get('营业收入增长率', None))
+            profit_growth = row.get('净利润增长率', row.get('净利润同比增长率', None))
             
             line = f"{idx+1}. {stock_code} {stock_name}"
             
             # 添加详细信息
             details = []
-            if market_cap != 'N/A':
+            if market_cap != None:
                 try:
                     cap_val = float(market_cap)
                     if cap_val >= 100000000:
@@ -116,13 +116,13 @@ class SmallCapSelector:
                 except:
                     pass
             
-            if revenue_growth != 'N/A':
+            if revenue_growth != None:
                 try:
                     details.append(f"营收增长:{float(revenue_growth):.2f}%")
                 except:
                     pass
             
-            if profit_growth != 'N/A':
+            if profit_growth != None:
                 try:
                     details.append(f"净利增长:{float(profit_growth):.2f}%")
                 except:

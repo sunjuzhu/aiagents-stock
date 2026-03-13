@@ -124,8 +124,8 @@ def display_stock_list(stocks_df: pd.DataFrame):
     """显示股票列表"""
     
     for idx, row in stocks_df.iterrows():
-        stock_code = row.get('股票代码', 'N/A')
-        stock_name = row.get('股票简称', 'N/A')
+        stock_code = row.get('股票代码', None)
+        stock_name = row.get('股票简称', None)
         
         with st.expander(f"📊 {idx+1}. {stock_code} {stock_name}", expanded=True):
             display_stock_detail(row)
@@ -156,8 +156,8 @@ def display_stock_detail(row: pd.Series):
     
     with col1:
         st.markdown("#### 📊 基本信息")
-        st.markdown(f"**股票代码**: {row.get('股票代码', 'N/A')}")
-        st.markdown(f"**股票名称**: {row.get('股票简称', 'N/A')}")
+        st.markdown(f"**股票代码**: {row.get('股票代码', None)}")
+        st.markdown(f"**股票名称**: {row.get('股票简称', None)}")
     
     # 只有当有财务数据时才显示财务指标
     if col2 is not None:
@@ -344,7 +344,7 @@ def is_valid_value(value):
         return False
     if pd.isna(value):
         return False
-    if str(value).strip() in ['', 'N/A', 'nan', 'None']:
+    if str(value).strip() in ['', None, 'nan', 'None']:
         return False
     return True
 
@@ -388,8 +388,8 @@ def send_dingtalk_notification(stocks_df: pd.DataFrame):
         message_text += "**精选股票**:\n\n"
         
         for idx, row in stocks_df.iterrows():
-            stock_code = row.get('股票代码', 'N/A')
-            stock_name = row.get('股票简称', 'N/A')
+            stock_code = row.get('股票代码', None)
+            stock_name = row.get('股票简称', None)
             message_text += f"{idx+1}. {stock_code} {stock_name}\n\n"
         
         message_text += f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"

@@ -25,22 +25,22 @@ class NewsFlowAgents:
         """
         import config
         self.model = model or config.DEFAULT_MODEL_NAME
-        self.deepseek_client = None
+        self.llm_client = None
         self._init_client()
     
     def _init_client(self):
         """初始化DeepSeek客户端"""
         try:
-            from deepseek_client import DeepSeekClient
-            self.deepseek_client = DeepSeekClient(model=self.model)
+            from llm_client import LLMClient
+            self.llm_client = LLMClient(model=self.model)
             logger.info(f"✅ DeepSeek客户端初始化成功，模型: {self.model}")
         except Exception as e:
             logger.error(f"❌ DeepSeek客户端初始化失败: {e}")
-            self.deepseek_client = None
+            self.llm_client = None
     
     def is_available(self) -> bool:
         """检查AI是否可用"""
-        return self.deepseek_client is not None
+        return self.llm_client is not None
     
     def sector_impact_agent(self, hot_topics: List[Dict], 
                             stock_news: List[Dict],
@@ -75,10 +75,10 @@ class NewsFlowAgents:
         if flow_data:
             flow_info = f"""
 当前流量状态:
-- 流量得分: {flow_data.get('total_score', 'N/A')}/1000
-- 流量等级: {flow_data.get('level', 'N/A')}
-- 社交媒体热度: {flow_data.get('social_score', 'N/A')}
-- 财经平台热度: {flow_data.get('finance_score', 'N/A')}
+- 流量得分: {flow_data.get('total_score', None)}/1000
+- 流量等级: {flow_data.get('level', None)}
+- 社交媒体热度: {flow_data.get('social_score', None)}
+- 财经平台热度: {flow_data.get('finance_score', None)}
 """
         
         prompt = f"""你是一名资深的A股短线投资分析师，专注于热点题材挖掘和板块轮动分析。
@@ -130,7 +130,7 @@ class NewsFlowAgents:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.deepseek_client.call_api(messages, temperature=0.5, max_tokens=2000)
+            response = self.llm_client.call_api(messages, temperature=0.5, max_tokens=2000)
             
             # 解析JSON
             result = self._parse_json_response(response)
@@ -173,7 +173,7 @@ class NewsFlowAgents:
             return self._fallback_stock_recommend(hot_sectors)
         
         sectors_text = '\n'.join([
-            f"- {s.get('name', '')}：{s.get('impact', '利好')}，置信度{s.get('confidence', 50)}%\n  原因：{s.get('reason', '')}\n  龙头特征：{s.get('leader_characteristics', 'N/A')}"
+            f"- {s.get('name', '')}：{s.get('impact', '利好')}，置信度{s.get('confidence', 50)}%\n  原因：{s.get('reason', '')}\n  龙头特征：{s.get('leader_characteristics', None)}"
             for s in hot_sectors[:5]
         ])
         
@@ -232,7 +232,7 @@ class NewsFlowAgents:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.deepseek_client.call_api(messages, temperature=0.6, max_tokens=2000)
+            response = self.llm_client.call_api(messages, temperature=0.6, max_tokens=2000)
             result = self._parse_json_response(response)
             
             if result:
@@ -312,7 +312,7 @@ class NewsFlowAgents:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.deepseek_client.call_api(messages, temperature=0.4, max_tokens=1500)
+            response = self.llm_client.call_api(messages, temperature=0.4, max_tokens=1500)
             result = self._parse_json_response(response)
             
             if result:
@@ -365,8 +365,8 @@ class NewsFlowAgents:
 综合分析数据：
 
 【流量分析】
-- 流量得分: {flow_data.get('total_score', 'N/A')}
-- 流量等级: {flow_data.get('level', 'N/A')}
+- 流量得分: {flow_data.get('total_score', None)}
+- 流量等级: {flow_data.get('level', None)}
 
 【情绪分析】
 - 情绪指数: {sentiment_data.get('sentiment_index', 50)}
@@ -375,7 +375,7 @@ class NewsFlowAgents:
 
 【板块分析】
 - 受益板块: {sectors_text}
-- 机会评估: {sector_analysis.get('opportunity_assessment', 'N/A')}
+- 机会评估: {sector_analysis.get('opportunity_assessment', None)}
 
 【股票推荐】
 - 推荐股票: {stocks_text}
@@ -421,7 +421,7 @@ class NewsFlowAgents:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.deepseek_client.call_api(messages, temperature=0.5, max_tokens=2000)
+            response = self.llm_client.call_api(messages, temperature=0.5, max_tokens=2000)
             result = self._parse_json_response(response)
             
             analysis_time = time.time() - start_time
@@ -593,7 +593,7 @@ class NewsFlowAgents:
                 {"role": "user", "content": prompt}
             ]
             
-            response = self.deepseek_client.call_api(messages, temperature=0.5, max_tokens=2000)
+            response = self.llm_client.call_api(messages, temperature=0.5, max_tokens=2000)
             result = self._parse_json_response(response)
             
             if result:

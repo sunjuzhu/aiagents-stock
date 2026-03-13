@@ -1017,5 +1017,5 @@ if __name__ == "__main__":
     detail = news_flow_db.get_snapshot_detail(snapshot_id)
     print(f"\n快照详情:")
     print(f"  流量得分: {detail['snapshot']['total_score']}")
-    print(f"  情绪指数: {detail['sentiment']['sentiment_index'] if detail['sentiment'] else 'N/A'}")
-    print(f"  AI建议: {detail['ai_analysis']['advice'] if detail['ai_analysis'] else 'N/A'}")
+    print(f"  情绪指数: {detail['sentiment']['sentiment_index'] if detail['sentiment'] else None}")
+    print(f"  AI建议: {detail['ai_analysis']['advice'] if detail['ai_analysis'] else None}")

@@ -566,7 +566,7 @@ cp .env.example .env
 
 编辑 `.env` 文件，填入您的 DeepSeek API Key：
 ```env
-DEEPSEEK_API_KEY=sk-your-actual-api-key-here
+API_KEY=sk-your-actual-api-key-here
 ```
 
 #### 3. 启动服务
@@ -640,8 +640,8 @@ cp .env.example .env
 2. 编辑 `.env` 文件，设置您的配置（也可在前端web界面-环境配置中设置）：
 ```env
 # DeepSeek API配置（必需）
-DEEPSEEK_API_KEY=your_actual_deepseek_api_key_here
-DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+API_KEY=your_actual_API_KEY_here
+BASE_URL=https://api.deepseek.com/v1
 
 # AI模型名称（可选，支持OpenAI兼容模型）
 # 常用：deepseek-chat, deepseek-reasoner, qwen-plus, gpt-4o
@@ -673,7 +673,7 @@ MINIQMT_PORT=58610
 
 #### 方法二：设置系统环境变量
 您也可以直接在系统环境变量中设置：
-- 变量名：`DEEPSEEK_API_KEY`
+- 变量名：`API_KEY`
 - 变量值：您的API密钥
 
 **注意**：环境变量文件的优先级高于系统环境变量。
@@ -1142,7 +1142,7 @@ WEBHOOK_KEYWORD=股票
 AI股票分析系统
 ├── app.py                          # Streamlit主界面
 ├── stock_data.py                   # 股票数据获取模块
-├── deepseek_client.py              # DeepSeek API客户端
+├── llm_client.py              # DeepSeek API客户端
 ├── ai_agents.py                    # AI智能体分析模块
 ├── monitor_manager.py              # 监测管理界面
 ├── monitor_service.py              # 监测服务后台
@@ -1193,7 +1193,7 @@ AI股票分析系统
 - 最终决策生成
 - 财务数据深度解读
 
-#### 🔗 API客户端 (deepseek_client.py)
+#### 🔗 API客户端 (llm_client.py)
 - DeepSeek API封装
 - 智能对话管理
 - 错误处理和重试
@@ -1402,8 +1402,8 @@ AI股票分析系统
 ### API配置
 ```env
 # .env 文件
-DEEPSEEK_API_KEY=your_api_key
-DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+API_KEY=your_api_key
+BASE_URL=https://api.deepseek.com/v1
 DEFAULT_MODEL_NAME=deepseek-chat   # 支持任意OpenAI兼容模型
 ```
 
@@ -1428,7 +1428,7 @@ DEFAULT_INTERVAL = "1d"    # 默认数据间隔
 ### 常见问题
 
 1. **API Key错误**
-   - 检查.env文件中的DEEPSEEK_API_KEY设置
+   - 检查.env文件中的API_KEY设置
    - 确保.env文件存在且格式正确
    - 确保API Key有效且有足够余额
 

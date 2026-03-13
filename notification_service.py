@@ -7,6 +7,11 @@ from typing import Dict, List
 import streamlit as st
 import pandas as pd
 
+os.environ["HTTP_PROXY"] = "http://127.0.0.1:10808"
+os.environ["HTTPS_PROXY"] = "http://127.0.0.1:10808"
+
+
+
 from monitor_db import monitor_db
 
 class NotificationService:
@@ -327,11 +332,11 @@ class NotificationService:
 **股票名称**: {notification['name']}
 
 **📊 实时行情**:
-- 当前价格: {notification.get('current_price', 'N/A')}元
-- 涨跌幅: {notification.get('change_pct', 'N/A')}%
-- 涨跌额: {notification.get('change_amount', 'N/A')}元
-- 成交量: {notification.get('volume', 'N/A')}手
-- 换手率: {notification.get('turnover_rate', 'N/A')}%
+- 当前价格: {notification.get('current_price', None)}元
+- 涨跌幅: {notification.get('change_pct', None)}%
+- 涨跌额: {notification.get('change_amount', None)}元
+- 成交量: {notification.get('volume', None)}手
+- 换手率: {notification.get('turnover_rate', None)}%
 
 **🎯 AI决策**: {notification['type']}
 
@@ -339,8 +344,8 @@ class NotificationService:
 
 **💰 持仓信息**:
 - 持仓状态: {notification.get('position_status', '未知')}
-- 持仓成本: {notification.get('position_cost', 'N/A')}元
-- 浮动盈亏: {notification.get('profit_loss_pct', 'N/A')}%
+- 持仓成本: {notification.get('position_cost', None)}元
+- 浮动盈亏: {notification.get('profit_loss_pct', None)}%
 
 **⏰ 触发时间**: {notification['triggered_at']}
 

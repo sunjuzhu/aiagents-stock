@@ -100,6 +100,13 @@ def display_main_force_selector():
         col1, col2, col3 = st.columns(3)
 
         with col1:
+            # 新增：交易所/板块选择
+            selected_prefixes = st.multiselect(
+                "限定股票代码开头",
+                options=["600", "601", "603", "605", "000", "001", "003", "300", "688"],
+                default=["600", "601", "603", "605", "000", "001", "003"],
+                help="60开头为沪市主板，00开头为深市主板。新股民通常只能买这两个板块。"
+            )
             max_change = st.number_input(
                 "最大涨跌幅(%)",
                 min_value=5.0,
@@ -150,6 +157,23 @@ def display_main_force_selector():
             # 保存结果到session_state
             st.session_state.main_force_result = result
             st.session_state.main_force_analyzer = analyzer
+        # 2. 【新增逻辑】根据你选择的开头代码进行二次过滤
+            if result['success'] and selected_prefixes:
+                # 过滤原始数据表
+                if analyzer.raw_stocks is not None and not analyzer.raw_stocks.empty:
+                    # 只保留代码开头在你勾选列表中的股票
+                    mask = analyzer.raw_stocks['股票代码'].astype(str).str.startswith(tuple(selected_prefixes))
+                    analyzer.raw_stocks = analyzer.raw_stocks[mask]
+                
+                # 过滤 AI 推荐的精选列表
+                if 'final_recommendations' in result:
+                    result['final_recommendations'] = [
+                        rec for rec in result['final_recommendations']
+                        if any(str(rec.get('symbol', '')).startswith(p) for p in selected_prefixes)
+                    ]
+                
+                # 更新推荐数量统计
+                result['filtered_stocks'] = len(analyzer.raw_stocks)
 
         # 显示结果
         if result['success']:
@@ -346,15 +370,15 @@ def display_recommendation_detail(rec: dict):
             st.markdown(f"- {reason}")
 
         st.markdown("#### 💡 投资亮点")
-        st.info(rec.get('highlights', 'N/A'))
+        st.info(rec.get('highlights', None))
 
     with col2:
         st.markdown("#### 📊 投资建议")
-        st.markdown(f"**建议仓位**: {rec.get('position', 'N/A')}")
-        st.markdown(f"**投资周期**: {rec.get('investment_period', 'N/A')}")
+        st.markdown(f"**建议仓位**: {rec.get('position', None)}")
+        st.markdown(f"**投资周期**: {rec.get('investment_period', None)}")
 
         st.markdown("#### ⚠️ 风险提示")
-        st.warning(rec.get('risks', 'N/A'))
+        st.warning(rec.get('risks', None))
 
     # 显示股票详细数据
     if 'stock_data' in rec:
@@ -367,18 +391,18 @@ def display_recommendation_detail(rec: dict):
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric("股票代码", stock_data.get('股票代码', 'N/A'))
+            st.metric("股票代码", stock_data.get('股票代码', None))
 
             # 显示行业
             industry_keys = [k for k in stock_data.keys() if '行业' in k]
             if industry_keys:
-                st.metric("所属行业", stock_data.get(industry_keys[0], 'N/A'))
+                st.metric("所属行业", stock_data.get(industry_keys[0], None))
 
         with col2:
             # 显示主力资金
             fund_keys = [k for k in stock_data.keys() if '主力' in k and '净流入' in k]
             if fund_keys:
-                fund_value = stock_data.get(fund_keys[0], 'N/A')
+                fund_value = stock_data.get(fund_keys[0], None)
                 if isinstance(fund_value, (int, float)):
                     st.metric("主力资金净流入", f"{fund_value/100000000:.2f}亿")
                 else:
@@ -388,7 +412,7 @@ def display_recommendation_detail(rec: dict):
             # 显示涨跌幅
             change_keys = [k for k in stock_data.keys() if '涨跌幅' in k]
             if change_keys:
-                change_value = stock_data.get(change_keys[0], 'N/A')
+                change_value = stock_data.get(change_keys[0], None)
                 if isinstance(change_value, (int, float)):
                     st.metric("区间涨跌幅", f"{change_value:.2f}%")
                 else:
@@ -402,19 +426,19 @@ def display_recommendation_detail(rec: dict):
             if '市盈率' in stock_data or any('市盈率' in k for k in stock_data.keys()):
                 pe_keys = [k for k in stock_data.keys() if '市盈率' in k]
                 if pe_keys:
-                    st.caption(f"市盈率: {stock_data.get(pe_keys[0], 'N/A')}")
+                    st.caption(f"市盈率: {stock_data.get(pe_keys[0], None)}")
 
         with metrics_col2:
             if '市净率' in stock_data or any('市净率' in k for k in stock_data.keys()):
                 pb_keys = [k for k in stock_data.keys() if '市净率' in k]
                 if pb_keys:
-                    st.caption(f"市净率: {stock_data.get(pb_keys[0], 'N/A')}")
+                    st.caption(f"市净率: {stock_data.get(pb_keys[0], None)}")
 
         with metrics_col3:
             if '总市值' in stock_data or any('总市值' in k for k in stock_data.keys()):
                 cap_keys = [k for k in stock_data.keys() if '总市值' in k]
                 if cap_keys:
-                    st.caption(f"总市值: {stock_data.get(cap_keys[0], 'N/A')}")
+                    st.caption(f"总市值: {stock_data.get(cap_keys[0], None)}")
 
 def display_analyst_reports(analyzer):
     """显示AI分析师完整报告"""
@@ -450,8 +474,8 @@ def display_analyst_reports(analyzer):
 
 def format_number(value, unit='', suffix=''):
     """格式化数字显示"""
-    if value is None or value == 'N/A':
-        return 'N/A'
+    if value is None or value == None:
+        return None
 
     try:
         num = float(value)
@@ -707,7 +731,7 @@ def run_main_force_batch_analysis():
             with st.expander("❌ 查看失败原因", expanded=True):
                 for r in results:
                     if not r.get("success", False):
-                        st.error(f"**{r.get('symbol', 'N/A')}**: {r.get('error', '未知错误')}")
+                        st.error(f"**{r.get('symbol', None)}**: {r.get('error', '未知错误')}")
 
         # 先保存到数据库历史记录（在 rerun 之前完成）
         save_success = False
@@ -847,11 +871,11 @@ def display_main_force_batch_results(batch_results):
                 '股票代码': stock_info.get('symbol', ''),
                 '股票名称': stock_info.get('name', ''),
                 '评级': f"{rating_emoji} {rating}",
-                '信心度': final_decision.get('confidence_level', 'N/A'),
-                '进场区间': final_decision.get('entry_range', 'N/A'),
-                '止盈位': final_decision.get('take_profit', 'N/A'),
-                '止损位': final_decision.get('stop_loss', 'N/A'),
-                '目标价': final_decision.get('target_price', 'N/A')
+                '信心度': final_decision.get('confidence_level', None),
+                '进场区间': final_decision.get('entry_range', None),
+                '止盈位': final_decision.get('take_profit', None),
+                '止损位': final_decision.get('stop_loss', None),
+                '目标价': final_decision.get('target_price', None)
             })
 
         df_display = pd.DataFrame(display_data)
@@ -893,22 +917,22 @@ def display_main_force_batch_results(batch_results):
                 col1, col2, col3 = st.columns(3)
 
                 with col1:
-                    st.metric("信心度", final_decision.get('confidence_level', 'N/A'))
+                    st.metric("信心度", final_decision.get('confidence_level', None))
 
                 with col2:
-                    st.metric("进场区间", final_decision.get('entry_range', 'N/A'))
+                    st.metric("进场区间", final_decision.get('entry_range', None))
 
                 with col3:
-                    st.metric("目标价", final_decision.get('target_price', 'N/A'))
+                    st.metric("目标价", final_decision.get('target_price', None))
 
                 # 止盈止损
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.metric("止盈位", final_decision.get('take_profit', 'N/A'))
+                    st.metric("止盈位", final_decision.get('take_profit', None))
 
                 with col2:
-                    st.metric("止损位", final_decision.get('stop_loss', 'N/A'))
+                    st.metric("止损位", final_decision.get('stop_loss', None))
 
                 # 投资建议
                 st.markdown("#### 💡 投资建议")

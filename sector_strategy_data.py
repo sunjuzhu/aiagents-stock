@@ -443,7 +443,7 @@ class SectorStrategyDataFetcher:
             market = data["market_overview"]
             text_parts.append(f"""
 【市场总体情况】
-时间: {data.get('timestamp', 'N/A')}
+时间: {data.get('timestamp', None)}
 
 大盘指数:
 """)
@@ -473,7 +473,7 @@ class SectorStrategyDataFetcher:
             north = data["north_flow"]
             text_parts.append(f"""
 【北向资金流向】
-日期: {north.get('date', 'N/A')}
+日期: {north.get('date', None)}
 北向资金净流入: {north.get('north_net_inflow', 0):.2f} 万元
   沪股通: {north.get('hgt_net_inflow', 0):.2f} 万元
   深股通: {north.get('sgt_net_inflow', 0):.2f} 万元

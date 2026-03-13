@@ -250,7 +250,7 @@ def display_analysis_result(result: dict):
     
     col1.metric("决策", action, delta=None)
     col2.metric("信心度", f"{decision['confidence']}%")
-    col3.metric("风险等级", decision.get('risk_level', 'N/A'))
+    col3.metric("风险等级", decision.get('risk_level', None))
     col4.metric("建议仓位", f"{decision.get('position_size_pct', 0)}%")
     
     # 决策理由
@@ -276,7 +276,7 @@ def display_analysis_result(result: dict):
         st.write(f"MA5: ¥{market_data.get('ma5', 0):.2f}")
         st.write(f"MA20: ¥{market_data.get('ma20', 0):.2f}")
         st.write(f"MA60: ¥{market_data.get('ma60', 0):.2f}")
-        st.write(f"趋势: {market_data.get('trend', 'N/A')}")
+        st.write(f"趋势: {market_data.get('trend', None)}")
     
     with tech_col2:
         st.markdown("**动量指标**")
@@ -695,7 +695,7 @@ def render_settings():
     
     with col1:
         st.markdown("**🤖 DeepSeek API**")
-        api_key = config.get('DEEPSEEK_API_KEY', '')
+        api_key = config.get('API_KEY', '')
         if api_key:
             st.success(f"✅ 已配置（{api_key[:8]}...）")
         else:

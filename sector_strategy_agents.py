@@ -3,7 +3,7 @@
 包含四个专业分析师智能体
 """
 
-from deepseek_client import DeepSeekClient
+from llm_client import LLMClient
 from typing import Dict, Any
 import time
 import config
@@ -14,7 +14,7 @@ class SectorStrategyAgents:
     
     def __init__(self, model=None):
         self.model = model or config.DEFAULT_MODEL_NAME
-        self.deepseek_client = DeepSeekClient(model=self.model)
+        self.llm_client = LLMClient(model=self.model)
         print(f"[智策] AI智能体系统初始化 (模型: {self.model})")
     
     def macro_strategist_agent(self, market_data: Dict, news_data: list) -> Dict[str, Any]:
@@ -109,7 +109,7 @@ class SectorStrategyAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 宏观策略师分析完成")
         
@@ -221,7 +221,7 @@ class SectorStrategyAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 板块诊断师分析完成")
         
@@ -253,7 +253,7 @@ class SectorStrategyAgents:
             # 净流入前15
             sorted_inflow = sorted(flow_list, key=lambda x: x["main_net_inflow"], reverse=True)
             fund_flow_summary = f"""
-【板块资金流向】(更新时间: {fund_flow_data.get('update_time', 'N/A')})
+【板块资金流向】(更新时间: {fund_flow_data.get('update_time', None)})
 
 主力资金净流入 TOP15:
 """
@@ -273,7 +273,7 @@ class SectorStrategyAgents:
         if north_flow_data:
             north_summary = f"""
 【北向资金】
-日期: {north_flow_data.get('date', 'N/A')}
+日期: {north_flow_data.get('date', None)}
 今日北向资金净流入: {north_flow_data.get('north_net_inflow', 0):.2f} 万元
   沪股通净流入: {north_flow_data.get('hgt_net_inflow', 0):.2f} 万元
   深股通净流入: {north_flow_data.get('sgt_net_inflow', 0):.2f} 万元
@@ -348,7 +348,7 @@ class SectorStrategyAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 资金流向分析师分析完成")
         
@@ -488,7 +488,7 @@ class SectorStrategyAgents:
             {"role": "user", "content": prompt}
         ]
         
-        analysis = self.deepseek_client.call_api(messages, max_tokens=4000)
+        analysis = self.llm_client.call_api(messages, max_tokens=4000)
         
         print("  ✓ 市场情绪解码员分析完成")
         

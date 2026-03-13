@@ -213,10 +213,10 @@ class FundFlowAkshareDataFetcher:
         if fund_flow_data:
             text_parts.append(f"""
 【个股资金流向数据 - akshare数据源】
-股票代码：{data.get('symbol', 'N/A')}
-市场：{fund_flow_data.get('market', 'N/A').upper()}
+股票代码：{data.get('symbol', None)}
+市场：{fund_flow_data.get('market', None).upper()}
 交易日数：最近{fund_flow_data.get('days', 0)}个交易日
-查询时间：{fund_flow_data.get('query_time', 'N/A')}
+查询时间：{fund_flow_data.get('query_time', None)}
 
 ═══════════════════════════════════════
 [资金流向详细数据]
@@ -225,9 +225,9 @@ class FundFlowAkshareDataFetcher:
             
             # 显示每个交易日的数据
             for idx, item in enumerate(fund_flow_data.get('data', []), 1):
-                date = item.get('日期', 'N/A')
-                close_price = item.get('收盘价', 'N/A')
-                change_pct = item.get('涨跌幅', 'N/A')
+                date = item.get('日期', None)
+                close_price = item.get('收盘价', None)
+                change_pct = item.get('涨跌幅', None)
                 
                 text_parts.append(f"""
 第 {idx} 个交易日 ({date}):
@@ -236,24 +236,24 @@ class FundFlowAkshareDataFetcher:
     - 涨跌幅: {change_pct}%
   
   主力资金:
-    - 主力净流入-净额: {item.get('主力净流入-净额', 'N/A')}
-    - 主力净流入-净占比: {item.get('主力净流入-净占比', 'N/A')}%
+    - 主力净流入-净额: {item.get('主力净流入-净额', None)}
+    - 主力净流入-净占比: {item.get('主力净流入-净占比', None)}%
   
   超大单:
-    - 超大单净流入-净额: {item.get('超大单净流入-净额', 'N/A')}
-    - 超大单净流入-净占比: {item.get('超大单净流入-净占比', 'N/A')}%
+    - 超大单净流入-净额: {item.get('超大单净流入-净额', None)}
+    - 超大单净流入-净占比: {item.get('超大单净流入-净占比', None)}%
   
   大单:
-    - 大单净流入-净额: {item.get('大单净流入-净额', 'N/A')}
-    - 大单净流入-净占比: {item.get('大单净流入-净占比', 'N/A')}%
+    - 大单净流入-净额: {item.get('大单净流入-净额', None)}
+    - 大单净流入-净占比: {item.get('大单净流入-净占比', None)}%
   
   中单:
-    - 中单净流入-净额: {item.get('中单净流入-净额', 'N/A')}
-    - 中单净流入-净占比: {item.get('中单净流入-净占比', 'N/A')}%
+    - 中单净流入-净额: {item.get('中单净流入-净额', None)}
+    - 中单净流入-净占比: {item.get('中单净流入-净占比', None)}%
   
   小单:
-    - 小单净流入-净额: {item.get('小单净流入-净额', 'N/A')}
-    - 小单净流入-净占比: {item.get('小单净流入-净占比', 'N/A')}%
+    - 小单净流入-净额: {item.get('小单净流入-净额', None)}
+    - 小单净流入-净占比: {item.get('小单净流入-净占比', None)}%
 """)
             
             # 添加统计汇总

@@ -286,7 +286,7 @@ class NewsAnnouncementDataFetcher:
             news_data = data["news_data"]
             text_parts.append(f"""
 【最新新闻】
-查询时间：{news_data.get('query_time', 'N/A')}
+查询时间：{news_data.get('query_time', None)}
 新闻数量：{news_data.get('count', 0)}条
 
 """)
@@ -305,7 +305,7 @@ class NewsAnnouncementDataFetcher:
             announcement_data = data["announcement_data"]
             text_parts.append(f"""
 【最新公告】
-查询时间：{announcement_data.get('query_time', 'N/A')}
+查询时间：{announcement_data.get('query_time', None)}
 公告数量：{announcement_data.get('count', 0)}条
 
 """)

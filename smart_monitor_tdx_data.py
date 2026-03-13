@@ -134,13 +134,13 @@ class SmartMonitorTDXDataFetcher:
                 data_list = result.get('data', [])
                 for item in data_list:
                     if item.get('code') == stock_code:
-                        return item.get('name', 'N/A')
+                        return item.get('name', None)
             
-            return 'N/A'
+            return None
             
         except Exception as e:
             self.logger.warning(f"获取股票名称失败 {stock_code}: {e}")
-            return 'N/A'
+            return None
     
     def get_kline_data(self, stock_code: str, kline_type: str = 'day', limit: int = 200) -> Optional[pd.DataFrame]:
         """

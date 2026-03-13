@@ -26,13 +26,13 @@ class ConfigManager:
                 "required": False,
                 "type": "text"
             },
-            "DEEPSEEK_API_KEY": {
+            "API_KEY": {
                 "value": "",
                 "description": "DeepSeek API密钥",
                 "required": True,
                 "type": "password"
             },
-            "DEEPSEEK_BASE_URL": {
+            "BASE_URL": {
                 "value": "https://api.deepseek.com/v1",
                 "description": "DeepSeek API地址",
                 "required": False,
@@ -193,8 +193,8 @@ class ConfigManager:
             
             # DeepSeek配置
             lines.append("# ========== DeepSeek API配置 ==========")
-            lines.append(f'DEEPSEEK_API_KEY="{config.get("DEEPSEEK_API_KEY", "")}"')
-            lines.append(f'DEEPSEEK_BASE_URL="{config.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")}"')
+            lines.append(f'API_KEY="{config.get("API_KEY", "")}"')
+            lines.append(f'BASE_URL="{config.get("BASE_URL", "https://api.deepseek.com/v1")}"')
             lines.append("")
             
             # Tushare配置
@@ -261,8 +261,8 @@ class ConfigManager:
                 return False, f"必填项 {info['description']} 不能为空"
         
         # 验证API Key格式（简单检查长度）
-        if config.get("DEEPSEEK_API_KEY"):
-            api_key = config.get("DEEPSEEK_API_KEY", "")
+        if config.get("API_KEY"):
+            api_key = config.get("API_KEY", "")
             if len(api_key) < 20:
                 return False, "DeepSeek API Key格式不正确（长度太短）"
         

@@ -96,11 +96,11 @@ class LowPriceBullSelector:
             # 显示选中的股票
             print(f"\n✅ 选中的股票:")
             for idx, row in selected.iterrows():
-                code = row.get('股票代码', 'N/A')
-                name = row.get('股票简称', 'N/A')
-                price = row.get('股价', row.get('最新价', 'N/A'))
-                growth = row.get('净利润增长率', row.get('净利润同比增长率', 'N/A'))
-                turnover = row.get('成交额', 'N/A')
+                code = row.get('股票代码', None)
+                name = row.get('股票简称', None)
+                price = row.get('股价', row.get('最新价', None))
+                growth = row.get('净利润增长率', row.get('净利润同比增长率', None))
+                turnover = row.get('成交额', None)
                 print(f"  {idx+1}. {code} {name} - 股价:{price} 净利增长:{growth}% 成交额:{turnover}")
             
             print(f"{'='*60}\n")

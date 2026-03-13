@@ -3,7 +3,7 @@
 包含四位专业分析师：康波周期分析师、美林时钟分析师、中国政策分析师、首席宏观策略师
 """
 
-from deepseek_client import DeepSeekClient
+from llm_client import LLMClient
 from typing import Dict, Any
 import time
 import config
@@ -14,7 +14,7 @@ class MacroCycleAgents:
 
     def __init__(self, model=None):
         self.model = model or config.DEFAULT_MODEL_NAME
-        self.deepseek_client = DeepSeekClient(model=self.model)
+        self.llm_client = LLMClient(model=self.model)
         print(f"[宏观周期] AI智能体系统初始化 (模型: {self.model})")
 
     def kondratieff_wave_agent(self, macro_data_text: str) -> Dict[str, Any]:
@@ -104,7 +104,7 @@ class MacroCycleAgents:
             {"role": "user", "content": prompt}
         ]
 
-        analysis = self.deepseek_client.call_api(messages, max_tokens=6000)
+        analysis = self.llm_client.call_api(messages, max_tokens=6000)
         print("  ✓ 康波周期分析师分析完成")
 
         return {
@@ -217,7 +217,7 @@ class MacroCycleAgents:
             {"role": "user", "content": prompt}
         ]
 
-        analysis = self.deepseek_client.call_api(messages, max_tokens=6000)
+        analysis = self.llm_client.call_api(messages, max_tokens=6000)
         print("  ✓ 美林时钟分析师分析完成")
 
         return {
@@ -320,7 +320,7 @@ class MacroCycleAgents:
             {"role": "user", "content": prompt}
         ]
 
-        analysis = self.deepseek_client.call_api(messages, max_tokens=5000)
+        analysis = self.llm_client.call_api(messages, max_tokens=5000)
         print("  ✓ 中国政策分析师分析完成")
 
         return {
@@ -435,7 +435,7 @@ class MacroCycleAgents:
             {"role": "user", "content": prompt}
         ]
 
-        analysis = self.deepseek_client.call_api(messages, max_tokens=6000)
+        analysis = self.llm_client.call_api(messages, max_tokens=6000)
         print("  ✓ 首席宏观策略师综合研判完成")
 
         return {

@@ -20,13 +20,13 @@ from config_manager import config_manager  # 复用主程序的配置管理器
 class SmartMonitorEngine:
     """智能盯盘引擎"""
     
-    def __init__(self, deepseek_api_key: str = None, qmt_account_id: str = None,
+    def __init__(self, API_KEY: str = None, qmt_account_id: str = None,
                  use_simulator: bool = None):
         """
         初始化智能盯盘引擎
         
         Args:
-            deepseek_api_key: DeepSeek API密钥（可选，从配置读取）
+            API_KEY: DeepSeek API密钥（可选，从配置读取）
             qmt_account_id: miniQMT账户ID（可选，从配置读取）
             use_simulator: 是否使用模拟交易（可选，从配置读取）
         """
@@ -36,8 +36,8 @@ class SmartMonitorEngine:
         config = config_manager.read_env()
         
         # DeepSeek API
-        if deepseek_api_key is None:
-            deepseek_api_key = config.get('DEEPSEEK_API_KEY', '')
+        if API_KEY is None:
+            API_KEY = config.get('API_KEY', '')
         
         # MiniQMT配置
         if qmt_account_id is None:
@@ -49,7 +49,7 @@ class SmartMonitorEngine:
             use_simulator = not miniqmt_enabled
         
         # 初始化各个模块
-        self.deepseek = SmartMonitorDeepSeek(deepseek_api_key)
+        self.deepseek = SmartMonitorDeepSeek(API_KEY)
         self.data_fetcher = SmartMonitorDataFetcher()
         self.db = SmartMonitorDB()
         self.notification = notification_service  # 使用主程序的通知服务
@@ -435,8 +435,8 @@ class SmartMonitorEngine:
             
             # 提取关键价位信息
             key_levels = decision.get('key_price_levels', {})
-            support = key_levels.get('support', 'N/A')
-            resistance = key_levels.get('resistance', 'N/A')
+            support = key_levels.get('support', None)
+            resistance = key_levels.get('resistance', None)
             
             # 构建简化的详细内容
             content = f"""
@@ -458,8 +458,8 @@ class SmartMonitorEngine:
 📈 关键价位
 • 支撑位: {support}
 • 阻力位: {resistance}
-• 止盈: {decision.get('take_profit_pct', 'N/A')}%
-• 止损: {decision.get('stop_loss_pct', 'N/A')}%
+• 止盈: {decision.get('take_profit_pct', None)}%
+• 止损: {decision.get('stop_loss_pct', None)}%
 
 📉 技术指标
 • MA5: {market_data.get('ma5', 0):.2f} / MA20: {market_data.get('ma20', 0):.2f}
@@ -484,15 +484,15 @@ class SmartMonitorEngine:
                 'details': content,
                 'triggered_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 # 新增实时市场数据
-                'current_price': market_data.get('current_price', 'N/A'),
-                'change_pct': f"{market_data.get('change_pct', 0):+.2f}" if market_data.get('change_pct') else 'N/A',
-                'change_amount': f"{market_data.get('change_amount', 0):+.2f}" if market_data.get('change_amount') else 'N/A',
-                'volume': market_data.get('volume', 'N/A'),
-                'turnover_rate': f"{market_data.get('turnover_rate', 0):.2f}" if market_data.get('turnover_rate') else 'N/A',
+                'current_price': market_data.get('current_price', None),
+                'change_pct': f"{market_data.get('change_pct', 0):+.2f}" if market_data.get('change_pct') else None,
+                'change_amount': f"{market_data.get('change_amount', 0):+.2f}" if market_data.get('change_amount') else None,
+                'volume': market_data.get('volume', None),
+                'turnover_rate': f"{market_data.get('turnover_rate', 0):.2f}" if market_data.get('turnover_rate') else None,
                 # 持仓信息
                 'position_status': '已持仓' if has_position else '未持仓',
-                'position_cost': f"{position_cost:.2f}" if has_position and position_cost else 'N/A',
-                'profit_loss_pct': f"{((market_data.get('current_price', 0) - position_cost) / position_cost * 100):+.2f}" if has_position and position_cost else 'N/A',
+                'position_cost': f"{position_cost:.2f}" if has_position and position_cost else None,
+                'profit_loss_pct': f"{((market_data.get('current_price', 0) - position_cost) / position_cost * 100):+.2f}" if has_position and position_cost else None,
                 # 交易时段信息
                 'trading_session': session_info.get('session', '未知')
             }
@@ -628,7 +628,7 @@ if __name__ == '__main__':
     
     # 使用模拟模式测试
     engine = SmartMonitorEngine(
-        deepseek_api_key=os.getenv('DEEPSEEK_API_KEY'),
+        API_KEY=os.getenv('API_KEY'),
         use_simulator=True
     )
     

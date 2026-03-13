@@ -5,7 +5,7 @@
 
 from sector_strategy_agents import SectorStrategyAgents
 from sector_strategy_db import SectorStrategyDatabase
-from deepseek_client import DeepSeekClient
+from llm_client import LLMClient
 from typing import Dict, Any
 import time
 import json
@@ -20,7 +20,7 @@ class SectorStrategyEngine:
     def __init__(self, model=None):
         self.model = model or config.DEFAULT_MODEL_NAME
         self.agents = SectorStrategyAgents(model=self.model)
-        self.deepseek_client = DeepSeekClient(model=self.model)
+        self.llm_client = LLMClient(model=self.model)
         self.database = SectorStrategyDatabase()
         self.logger = logging.getLogger(__name__)
         if not self.logger.handlers:
@@ -273,7 +273,7 @@ class SectorStrategyEngine:
             {"role": "user", "content": prompt}
         ]
         
-        report = self.deepseek_client.call_api(messages, max_tokens=5000)
+        report = self.llm_client.call_api(messages, max_tokens=5000)
         
         print("  ✓ 综合研判完成")
         return report
@@ -399,7 +399,7 @@ class SectorStrategyEngine:
             {"role": "user", "content": prompt}
         ]
         
-        response = self.deepseek_client.call_api(messages, temperature=0.3, max_tokens=6000)
+        response = self.llm_client.call_api(messages, temperature=0.3, max_tokens=6000)
         
         # 尝试解析JSON
         try:

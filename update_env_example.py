@@ -13,10 +13,10 @@ env_example_content = """# =====================================================
 # ========== DeepSeek API配置 ==========
 # DeepSeek API密钥（必填）
 # 获取地址：https://platform.deepseek.com/api_keys
-DEEPSEEK_API_KEY=your_actual_deepseek_api_key_here
+API_KEY=your_actual_API_KEY_here
 
 # DeepSeek API基础URL（可选，使用默认值即可）
-DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+BASE_URL=https://api.deepseek.com/v1
 
 
 # ========== Tushare数据接口（可选）==========

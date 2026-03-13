@@ -168,7 +168,7 @@ class SectorStrategyPDFGenerator:
         
         overview_text = f"""
         <para>
-        本报告基于{data.get('timestamp', 'N/A')}的实时市场数据，
+        本报告基于{data.get('timestamp', None)}的实时市场数据，
         通过四位AI智能体的多维度分析，为您提供板块投资策略建议。
         </para>
         """
@@ -240,9 +240,9 @@ class SectorStrategyPDFGenerator:
             
             for idx, item in enumerate(bullish, 1):
                 text = f"""
-                {idx}. <b>{item.get('sector', 'N/A')}</b> (信心度: {item.get('confidence', 0)}/10)<br/>
-                   理由: {item.get('reason', 'N/A')}<br/>
-                   风险: {item.get('risk', 'N/A')}
+                {idx}. <b>{item.get('sector', None)}</b> (信心度: {item.get('confidence', 0)}/10)<br/>
+                   理由: {item.get('reason', None)}<br/>
+                   风险: {item.get('risk', None)}
                 """
                 elements.append(Paragraph(text, styles['Small']))
                 elements.append(Spacer(1, 0.05*inch))
@@ -255,9 +255,9 @@ class SectorStrategyPDFGenerator:
             
             for idx, item in enumerate(bearish, 1):
                 text = f"""
-                {idx}. <b>{item.get('sector', 'N/A')}</b> (信心度: {item.get('confidence', 0)}/10)<br/>
-                   理由: {item.get('reason', 'N/A')}<br/>
-                   风险: {item.get('risk', 'N/A')}
+                {idx}. <b>{item.get('sector', None)}</b> (信心度: {item.get('confidence', 0)}/10)<br/>
+                   理由: {item.get('reason', None)}<br/>
+                   风险: {item.get('risk', None)}
                 """
                 elements.append(Paragraph(text, styles['Small']))
                 elements.append(Spacer(1, 0.05*inch))
@@ -279,10 +279,10 @@ class SectorStrategyPDFGenerator:
             elements.append(Paragraph("<b>当前强势板块:</b>", styles['Normal']))
             for item in current_strong:
                 text = f"""
-                • <b>{item.get('sector', 'N/A')}</b><br/>
-                  轮动逻辑: {item.get('logic', 'N/A')[:100]}...<br/>
-                  时间窗口: {item.get('time_window', 'N/A')}<br/>
-                  操作建议: {item.get('advice', 'N/A')}
+                • <b>{item.get('sector', None)}</b><br/>
+                  轮动逻辑: {item.get('logic', None)[:100]}...<br/>
+                  时间窗口: {item.get('time_window', None)}<br/>
+                  操作建议: {item.get('advice', None)}
                 """
                 elements.append(Paragraph(text, styles['Small']))
                 elements.append(Spacer(1, 0.05*inch))
@@ -294,10 +294,10 @@ class SectorStrategyPDFGenerator:
             elements.append(Paragraph("<b>潜力接力板块:</b>", styles['Normal']))
             for item in potential:
                 text = f"""
-                • <b>{item.get('sector', 'N/A')}</b><br/>
-                  轮动逻辑: {item.get('logic', 'N/A')[:100]}...<br/>
-                  时间窗口: {item.get('time_window', 'N/A')}<br/>
-                  操作建议: {item.get('advice', 'N/A')}
+                • <b>{item.get('sector', None)}</b><br/>
+                  轮动逻辑: {item.get('logic', None)[:100]}...<br/>
+                  时间窗口: {item.get('time_window', None)}<br/>
+                  操作建议: {item.get('advice', None)}
                 """
                 elements.append(Paragraph(text, styles['Small']))
                 elements.append(Spacer(1, 0.05*inch))
@@ -321,10 +321,10 @@ class SectorStrategyPDFGenerator:
         for idx, item in enumerate(hottest[:5], 1):
             table_data.append([
                 str(idx),
-                item.get('sector', 'N/A'),
+                item.get('sector', None),
                 str(item.get('score', 0)),
-                item.get('trend', 'N/A'),
-                item.get('sustainability', 'N/A')
+                item.get('trend', None),
+                item.get('sustainability', None)
             ])
         
         if len(table_data) > 1:

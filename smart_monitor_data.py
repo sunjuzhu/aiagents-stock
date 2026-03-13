@@ -91,10 +91,10 @@ class SmartMonitorDataFetcher:
             try:
                 # 1.1 获取股票基本信息（名称）
                 info_df = ak.stock_individual_info_em(symbol=stock_code)
-                stock_name = 'N/A'
+                stock_name = None
                 if not info_df.empty:
                     info_dict = dict(zip(info_df['item'], info_df['value']))
-                    stock_name = info_dict.get('股票简称', 'N/A')
+                    stock_name = info_dict.get('股票简称', None)
                 
                 # 1.2 获取分钟级实时行情
                 min_df = ak.stock_zh_a_hist_min_em(symbol=stock_code, period='1', adjust='')
@@ -634,7 +634,7 @@ class SmartMonitorDataFetcher:
                         
                         # 获取股票名称
                         stock_basic = self.ts_pro.stock_basic(ts_code=ts_code, fields='name')
-                        stock_name = stock_basic.iloc[0]['name'] if not stock_basic.empty else 'N/A'
+                        stock_name = stock_basic.iloc[0]['name'] if not stock_basic.empty else None
                         
                         self.logger.info(f"✅ Tushare降级成功（基础接口），获取到 {stock_code} 数据")
                         
@@ -662,7 +662,7 @@ class SmartMonitorDataFetcher:
             try:
                 # 获取股票名称
                 stock_basic = self.ts_pro.stock_basic(ts_code=ts_code, fields='name')
-                stock_name = stock_basic.iloc[0]['name'] if not stock_basic.empty else 'N/A'
+                stock_name = stock_basic.iloc[0]['name'] if not stock_basic.empty else None
                 
                 # 使用pro_bar获取行情（社区版免费）
                 import tushare as ts

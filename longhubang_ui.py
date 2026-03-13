@@ -226,7 +226,7 @@ def display_analysis_results(result):
     """显示分析结果"""
     
     st.success("✅ 龙虎榜分析完成！")
-    st.info(f"📅 分析时间: {result.get('timestamp', 'N/A')}")
+    st.info(f"📅 分析时间: {result.get('timestamp', None)}")
     
     # 数据概况
     data_info = result.get('data_info', {})
@@ -602,7 +602,7 @@ def display_agents_reports(result):
                 st.markdown(analysis)
                 
                 st.markdown(f"*{agent_data.get('agent_role', '')}*")
-                st.caption(f"分析时间: {agent_data.get('timestamp', 'N/A')}")
+                st.caption(f"分析时间: {agent_data.get('timestamp', None)}")
 
 
 def display_data_details(result):
@@ -989,7 +989,7 @@ def display_history_tab():
                                 with st.expander(f"{info['icon']} {info['title']}", expanded=False):
                                     analysis = agent_data.get('analysis', '暂无分析')
                                     st.markdown(analysis)
-                                    st.caption(f"分析时间: {agent_data.get('timestamp', 'N/A')}")
+                                    st.caption(f"分析时间: {agent_data.get('timestamp', None)}")
                     
                     # 显示AI评分排名
                     scoring_ranking = analysis_content_parsed.get('scoring_ranking', [])
@@ -1210,7 +1210,7 @@ def display_statistics_tab():
         # 日期范围
         date_range = stats.get('date_range', {})
         if date_range:
-            st.info(f"📅 数据日期范围: {date_range.get('start', 'N/A')} 至 {date_range.get('end', 'N/A')}")
+            st.info(f"📅 数据日期范围: {date_range.get('start', None)} 至 {date_range.get('end', None)}")
         
         st.markdown("---")
         
@@ -1532,7 +1532,7 @@ def display_longhubang_batch_results(batch_results: dict):
             
             with col1:
                 st.markdown("**基本信息**")
-                st.write(f"当前价: {stock_info.get('current_price', 'N/A')}")
+                st.write(f"当前价: {stock_info.get('current_price', None)}")
                 st.write(f"目标价: {target_price}")
             
             with col2:

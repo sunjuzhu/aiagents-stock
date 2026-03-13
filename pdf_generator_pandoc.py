@@ -21,15 +21,15 @@ def generate_markdown_report(stock_info, agents_results, discussion_result, fina
 
 | 项目 | 值 |
 |------|-----|
-| **股票代码** | {stock_info.get('symbol', 'N/A')} |
-| **股票名称** | {stock_info.get('name', 'N/A')} |
-| **当前价格** | {stock_info.get('current_price', 'N/A')} |
-| **涨跌幅** | {stock_info.get('change_percent', 'N/A')}% |
-| **市盈率(PE)** | {stock_info.get('pe_ratio', 'N/A')} |
-| **市净率(PB)** | {stock_info.get('pb_ratio', 'N/A')} |
-| **市值** | {stock_info.get('market_cap', 'N/A')} |
-| **市场** | {stock_info.get('market', 'N/A')} |
-| **交易所** | {stock_info.get('exchange', 'N/A')} |
+| **股票代码** | {stock_info.get('symbol', None)} |
+| **股票名称** | {stock_info.get('name', None)} |
+| **当前价格** | {stock_info.get('current_price', None)} |
+| **涨跌幅** | {stock_info.get('change_percent', None)}% |
+| **市盈率(PE)** | {stock_info.get('pe_ratio', None)} |
+| **市净率(PB)** | {stock_info.get('pb_ratio', None)} |
+| **市值** | {stock_info.get('market_cap', None)} |
+| **市场** | {stock_info.get('market', None)} |
+| **交易所** | {stock_info.get('exchange', None)} |
 
 ---
 

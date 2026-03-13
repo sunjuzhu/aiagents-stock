@@ -45,8 +45,8 @@ import json
 #     st.sidebar.header("🎯 投资建议")
 #     advice = data.get('advice', {})
 #     st.sidebar.success(f"**建议操作：{advice.get('rating', '观望')}**")
-#     st.sidebar.write(f"目标价：{advice.get('target_price', 'N/A')}")
-#     st.sidebar.write(f"止损价：{advice.get('stop_loss', 'N/A')}")
+#     st.sidebar.write(f"目标价：{advice.get('target_price', None)}")
+#     st.sidebar.write(f"止损价：{advice.get('stop_loss', None)}")
 #     st.sidebar.warning(f"风险提示：{advice.get('risk_warning', '数据缺失')}")
     
 #     if st.sidebar.button("🏠 返回监控列表"):

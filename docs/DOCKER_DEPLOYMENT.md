@@ -66,7 +66,7 @@ cp .env.example .env
 
 3. **编辑 `.env` 文件，填入您的配置**
 ```env
-DEEPSEEK_API_KEY=sk-your-actual-api-key-here
+API_KEY=sk-your-actual-api-key-here
 EMAIL_ENABLED=false
 # ... 其他配置
 ```
@@ -317,13 +317,13 @@ services:
 services:
   agentsstock:
     secrets:
-      - deepseek_api_key
+      - API_KEY
     environment:
-      - DEEPSEEK_API_KEY_FILE=/run/secrets/deepseek_api_key
+      - API_KEY_FILE=/run/secrets/API_KEY
 
 secrets:
-  deepseek_api_key:
-    file: ./secrets/deepseek_api_key.txt
+  API_KEY:
+    file: ./secrets/API_KEY.txt
 ```
 
 3. **定期更新镜像**

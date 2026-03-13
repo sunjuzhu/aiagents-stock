@@ -132,7 +132,7 @@ def display_stock_results(stocks_df: pd.DataFrame, selector):
     with col2:
         # 智能计算平均净利增长率（过滤无效值）
         growth_col = stocks_df.get('净利润增长率', stocks_df.get('净利润同比增长率', pd.Series([])))
-        valid_growth = growth_col[growth_col.notna() & (growth_col != '') & (growth_col != 'N/A')]
+        valid_growth = growth_col[growth_col.notna() & (growth_col != '') & (growth_col != None)]
         if len(valid_growth) > 0:
             avg_growth = pd.to_numeric(valid_growth, errors='coerce').mean()
             if not pd.isna(avg_growth):
@@ -145,7 +145,7 @@ def display_stock_results(stocks_df: pd.DataFrame, selector):
     with col3:
         # 智能计算平均股价（过滤无效值）
         price_col = stocks_df.get('股价', stocks_df.get('最新价', pd.Series([])))
-        valid_price = price_col[price_col.notna() & (price_col != '') & (price_col != 'N/A')]
+        valid_price = price_col[price_col.notna() & (price_col != '') & (price_col != None)]
         if len(valid_price) > 0:
             avg_price = pd.to_numeric(valid_price, errors='coerce').mean()
             if not pd.isna(avg_price):
@@ -162,8 +162,8 @@ def display_stock_results(stocks_df: pd.DataFrame, selector):
     
     for idx, row in stocks_df.iterrows():
         # 获取股票代码和简称
-        code = row.get('股票代码', 'N/A')
-        name = row.get('股票简称', 'N/A')
+        code = row.get('股票代码', None)
+        name = row.get('股票简称', None)
         
         # 获取价格信息作为标题补充
         price = row.get('股价', row.get('最新价', None))
@@ -236,12 +236,12 @@ def display_stock_detail(row: pd.Series):
     """显示单个股票详情"""
     
     def is_valid_value(value):
-        """判断值是否有效（非None、非NaN、非空字符串、非'N/A'）"""
+        """判断值是否有效（非None、非NaN、非空字符串、非None）"""
         if value is None:
             return False
         if pd.isna(value):
             return False
-        if str(value).strip() in ['', 'N/A', 'nan', 'None']:
+        if str(value).strip() in ['', None, 'nan', 'None']:
             return False
         return True
     
@@ -417,7 +417,7 @@ def run_strategy_simulation(stocks_df: pd.DataFrame):
     
     for idx, row in stocks_df.head(strategy.max_daily_buy).iterrows():
         code = str(row.get('股票代码', '')).split('.')[0]
-        name = row.get('股票简称', 'N/A')
+        name = row.get('股票简称', None)
         price = float(row.get('股价', row.get('最新价', 0)))
         
         if price > 0:
@@ -514,7 +514,7 @@ def send_dingtalk_notification(stocks_df: pd.DataFrame, top_n: int):
             
             # 股价
             price = row.get('股价', row.get('最新价', None))
-            if price is not None and not pd.isna(price) and str(price).strip() not in ['', 'N/A']:
+            if price is not None and not pd.isna(price) and str(price).strip() not in ['', None]:
                 try:
                     price_float = float(price)
                     message_text += f"   - 股价: {price_float:.2f}元\n"
@@ -523,7 +523,7 @@ def send_dingtalk_notification(stocks_df: pd.DataFrame, top_n: int):
             
             # 净利润增长率
             growth = row.get('净利润增长率', row.get('净利润同比增长率', None))
-            if growth is not None and not pd.isna(growth) and str(growth).strip() not in ['', 'N/A']:
+            if growth is not None and not pd.isna(growth) and str(growth).strip() not in ['', None]:
                 try:
                     growth_float = float(growth)
                     message_text += f"   - 净利增长: {growth_float:.2f}%\n"
@@ -532,7 +532,7 @@ def send_dingtalk_notification(stocks_df: pd.DataFrame, top_n: int):
             
             # 成交额
             turnover = row.get('成交额', None)
-            if turnover is not None and not pd.isna(turnover) and str(turnover).strip() not in ['', 'N/A']:
+            if turnover is not None and not pd.isna(turnover) and str(turnover).strip() not in ['', None]:
                 try:
                     turnover_float = float(turnover)
                     if turnover_float >= 100000000:  # 亿
@@ -546,7 +546,7 @@ def send_dingtalk_notification(stocks_df: pd.DataFrame, top_n: int):
             
             # 所属行业
             industry = row.get('所属行业', row.get('所属同花顺行业', None))
-            if industry is not None and not pd.isna(industry) and str(industry).strip() not in ['', 'N/A']:
+            if industry is not None and not pd.isna(industry) and str(industry).strip() not in ['', None]:
                 message_text += f"   - 所属行业: {industry}\n"
             
             message_text += "\n"

@@ -106,7 +106,7 @@ def display_stock_card(stock: Dict):
             st.metric("评级", f"{rating_color.get(stock['rating'], '⚪')} {stock['rating']}")
         
         with col2:
-            if stock['current_price'] and stock['current_price'] != 'N/A':
+            if stock['current_price'] and stock['current_price'] != None:
                 st.metric("当前价格", f"¥{stock['current_price']}")
             else:
                 st.metric("当前价格", "等待更新")

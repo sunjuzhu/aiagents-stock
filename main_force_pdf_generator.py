@@ -13,7 +13,7 @@ def generate_main_force_markdown_report(analyzer, result):
     
     # 获取分析参数
     params = result.get('params', {})
-    start_date = params.get('start_date', 'N/A')
+    start_date = params.get('start_date', None)
     min_cap = params.get('min_market_cap', 50)
     max_cap = params.get('max_market_cap', 5000)
     max_change = params.get('max_range_change', 50)
@@ -95,12 +95,12 @@ def generate_main_force_markdown_report(analyzer, result):
             if 'stock_data' in rec:
                 stock_data = rec['stock_data']
                 markdown_content += f"""
-- **所属行业**: {stock_data.get('industry', 'N/A')}
-- **市值**: {stock_data.get('market_cap', 'N/A')}
-- **主力资金流向**: {stock_data.get('main_fund_inflow', 'N/A')}
-- **区间涨跌幅**: {stock_data.get('range_change', 'N/A')}%
-- **市盈率**: {stock_data.get('pe_ratio', 'N/A')}
-- **市净率**: {stock_data.get('pb_ratio', 'N/A')}
+- **所属行业**: {stock_data.get('industry', None)}
+- **市值**: {stock_data.get('market_cap', None)}
+- **主力资金流向**: {stock_data.get('main_fund_inflow', None)}
+- **区间涨跌幅**: {stock_data.get('range_change', None)}%
+- **市盈率**: {stock_data.get('pe_ratio', None)}
+- **市净率**: {stock_data.get('pb_ratio', None)}
 
 """
             
@@ -182,7 +182,7 @@ def generate_main_force_markdown_report(analyzer, result):
                 for col in final_display_cols:
                     value = row[col]
                     if pd.isna(value):
-                        row_data.append('N/A')
+                        row_data.append(None)
                     else:
                         row_data.append(str(value))
                 markdown_content += "| " + " | ".join(row_data) + " |\n"

@@ -396,7 +396,7 @@ def display_analysis_results(result):
     """显示分析结果"""
     
     st.success("✅ 智策分析完成！")
-    st.info(f"📅 分析时间: {result.get('timestamp', 'N/A')}")
+    st.info(f"📅 分析时间: {result.get('timestamp', None)}")
     # 显示缓存提示（如果本次分析使用了缓存数据）
     cache_meta = result.get("cache_meta")
     if cache_meta and (cache_meta.get("from_cache") or cache_meta.get("cache_warning")):
@@ -473,7 +473,7 @@ def display_predictions(predictions):
             for item in bullish:
                 st.markdown(f"""
                 <div class="agent-card" style="border-left-color: #4caf50;">
-                    <h4>{item.get('sector', 'N/A')} <span style="color: #4caf50;">↑</span></h4>
+                    <h4>{item.get('sector', None)} <span style="color: #4caf50;">↑</span></h4>
                     <p><strong>信心度:</strong> {item.get('confidence', 0)}/10</p>
                     <p><strong>理由:</strong> {item.get('reason', '')}</p>
                     <p><strong>风险:</strong> {item.get('risk', '')}</p>
@@ -489,7 +489,7 @@ def display_predictions(predictions):
             for item in bearish:
                 st.markdown(f"""
                 <div class="agent-card" style="border-left-color: #f44336;">
-                    <h4>{item.get('sector', 'N/A')} <span style="color: #f44336;">↓</span></h4>
+                    <h4>{item.get('sector', None)} <span style="color: #f44336;">↓</span></h4>
                     <p><strong>信心度:</strong> {item.get('confidence', 0)}/10</p>
                     <p><strong>理由:</strong> {item.get('reason', '')}</p>
                     <p><strong>风险:</strong> {item.get('risk', '')}</p>
@@ -512,8 +512,8 @@ def display_predictions(predictions):
         current_strong = rotation.get("current_strong", [])
         for item in current_strong:
             st.markdown(f"""
-            **{item.get('sector', 'N/A')}**
-            - 时间窗口: {item.get('time_window', 'N/A')}
+            **{item.get('sector', None)}**
+            - 时间窗口: {item.get('time_window', None)}
             - 逻辑: {item.get('logic', '')[:50]}...
             - 建议: {item.get('advice', '')}
             """)
@@ -523,8 +523,8 @@ def display_predictions(predictions):
         potential = rotation.get("potential", [])
         for item in potential:
             st.markdown(f"""
-            **{item.get('sector', 'N/A')}**
-            - 时间窗口: {item.get('time_window', 'N/A')}
+            **{item.get('sector', None)}**
+            - 时间窗口: {item.get('time_window', None)}
             - 逻辑: {item.get('logic', '')[:50]}...
             - 建议: {item.get('advice', '')}
             """)
@@ -534,8 +534,8 @@ def display_predictions(predictions):
         declining = rotation.get("declining", [])
         for item in declining:
             st.markdown(f"""
-            **{item.get('sector', 'N/A')}**
-            - 时间窗口: {item.get('time_window', 'N/A')}
+            **{item.get('sector', None)}**
+            - 时间窗口: {item.get('time_window', None)}
             - 逻辑: {item.get('logic', '')[:50]}...
             - 建议: {item.get('advice', '')}
             """)
@@ -554,9 +554,9 @@ def display_predictions(predictions):
         hottest = heat.get("hottest", [])
         for idx, item in enumerate(hottest, 1):
             st.metric(
-                f"{idx}. {item.get('sector', 'N/A')}",
+                f"{idx}. {item.get('sector', None)}",
                 f"{item.get('score', 0)}分",
-                f"{item.get('trend', 'N/A')}"
+                f"{item.get('trend', None)}"
             )
     
     with col2:
@@ -564,7 +564,7 @@ def display_predictions(predictions):
         heating = heat.get("heating", [])
         for idx, item in enumerate(heating, 1):
             st.metric(
-                f"{idx}. {item.get('sector', 'N/A')}",
+                f"{idx}. {item.get('sector', None)}",
                 f"{item.get('score', 0)}分",
                 "↗️ 升温"
             )
@@ -574,7 +574,7 @@ def display_predictions(predictions):
         cooling = heat.get("cooling", [])
         for idx, item in enumerate(cooling, 1):
             st.metric(
-                f"{idx}. {item.get('sector', 'N/A')}",
+                f"{idx}. {item.get('sector', None)}",
                 f"{item.get('score', 0)}分",
                 "↘️ 降温"
             )
@@ -592,14 +592,14 @@ def display_predictions(predictions):
             st.markdown(f"""
             <div class="decision-card">
                 <h4>💡 市场观点</h4>
-                <p>{summary.get('market_view', 'N/A')}</p>
+                <p>{summary.get('market_view', None)}</p>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown(f"""
             <div class="agent-card" style="border-left-color: #2196f3;">
                 <h4>🎯 核心机会</h4>
-                <p>{summary.get('key_opportunity', 'N/A')}</p>
+                <p>{summary.get('key_opportunity', None)}</p>
             </div>
             """, unsafe_allow_html=True)
         
@@ -607,14 +607,14 @@ def display_predictions(predictions):
             st.markdown(f"""
             <div class="warning-card">
                 <h4>⚠️ 主要风险</h4>
-                <p>{summary.get('major_risk', 'N/A')}</p>
+                <p>{summary.get('major_risk', None)}</p>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown(f"""
             <div class="agent-card" style="border-left-color: #ff9800;">
                 <h4>📋 整体策略</h4>
-                <p>{summary.get('strategy', 'N/A')}</p>
+                <p>{summary.get('strategy', None)}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -700,12 +700,12 @@ def display_visualizations(predictions):
         types = []
         
         for item in bullish[:5]:
-            sectors.append(item.get('sector', 'N/A'))
+            sectors.append(item.get('sector', None))
             confidence.append(item.get('confidence', 0))
             types.append('看多')
         
         for item in bearish[:5]:
-            sectors.append(item.get('sector', 'N/A'))
+            sectors.append(item.get('sector', None))
             confidence.append(-item.get('confidence', 0))  # 负值表示看空
             types.append('看空')
         
@@ -738,12 +738,12 @@ def display_visualizations(predictions):
         trends = []
         
         for item in hottest:
-            sectors.append(item.get('sector', 'N/A'))
+            sectors.append(item.get('sector', None))
             scores.append(item.get('score', 0))
             trends.append('最热')
         
         for item in heating:
-            sectors.append(item.get('sector', 'N/A'))
+            sectors.append(item.get('sector', None))
             scores.append(item.get('score', 0))
             trends.append('升温')
         
@@ -857,7 +857,7 @@ def generate_sector_markdown_report(result_data: dict) -> str:
 
 ## 📈 市场概况
 
-本报告基于{result_data.get('timestamp', 'N/A')}的实时市场数据，
+本报告基于{result_data.get('timestamp', None)}的实时市场数据，
 通过四位AI智能体的多维度分析，为您提供板块投资策略建议。
 
 ### 分析师团队:
@@ -894,16 +894,16 @@ def generate_sector_markdown_report(result_data: dict) -> str:
         if bullish:
             markdown_content += "#### 🟢 看多板块\n\n"
             for idx, item in enumerate(bullish, 1):
-                markdown_content += f"{idx}. **{item.get('sector', 'N/A')}** (信心度: {item.get('confidence', 0)}/10)\n"
-                markdown_content += f"   - 理由: {item.get('reason', 'N/A')}\n"
-                markdown_content += f"   - 风险: {item.get('risk', 'N/A')}\n\n"
+                markdown_content += f"{idx}. **{item.get('sector', None)}** (信心度: {item.get('confidence', 0)}/10)\n"
+                markdown_content += f"   - 理由: {item.get('reason', None)}\n"
+                markdown_content += f"   - 风险: {item.get('risk', None)}\n\n"
         
         if bearish:
             markdown_content += "#### 🔴 看空板块\n\n"
             for idx, item in enumerate(bearish, 1):
-                markdown_content += f"{idx}. **{item.get('sector', 'N/A')}** (信心度: {item.get('confidence', 0)}/10)\n"
-                markdown_content += f"   - 理由: {item.get('reason', 'N/A')}\n"
-                markdown_content += f"   - 风险: {item.get('risk', 'N/A')}\n\n"
+                markdown_content += f"{idx}. **{item.get('sector', None)}** (信心度: {item.get('confidence', 0)}/10)\n"
+                markdown_content += f"   - 理由: {item.get('reason', None)}\n"
+                markdown_content += f"   - 风险: {item.get('risk', None)}\n\n"
         
         # 2. 板块轮动预测
         rotation = predictions.get('rotation', {})
@@ -916,26 +916,26 @@ def generate_sector_markdown_report(result_data: dict) -> str:
         if current_strong:
             markdown_content += "#### 💪 当前强势板块\n\n"
             for item in current_strong:
-                markdown_content += f"- **{item.get('sector', 'N/A')}**\n"
-                markdown_content += f"  - 轮动逻辑: {item.get('logic', 'N/A')}\n"
-                markdown_content += f"  - 时间窗口: {item.get('time_window', 'N/A')}\n"
-                markdown_content += f"  - 操作建议: {item.get('advice', 'N/A')}\n\n"
+                markdown_content += f"- **{item.get('sector', None)}**\n"
+                markdown_content += f"  - 轮动逻辑: {item.get('logic', None)}\n"
+                markdown_content += f"  - 时间窗口: {item.get('time_window', None)}\n"
+                markdown_content += f"  - 操作建议: {item.get('advice', None)}\n\n"
         
         if potential:
             markdown_content += "#### 🌱 潜力接力板块\n\n"
             for item in potential:
-                markdown_content += f"- **{item.get('sector', 'N/A')}**\n"
-                markdown_content += f"  - 轮动逻辑: {item.get('logic', 'N/A')}\n"
-                markdown_content += f"  - 时间窗口: {item.get('time_window', 'N/A')}\n"
-                markdown_content += f"  - 操作建议: {item.get('advice', 'N/A')}\n\n"
+                markdown_content += f"- **{item.get('sector', None)}**\n"
+                markdown_content += f"  - 轮动逻辑: {item.get('logic', None)}\n"
+                markdown_content += f"  - 时间窗口: {item.get('time_window', None)}\n"
+                markdown_content += f"  - 操作建议: {item.get('advice', None)}\n\n"
         
         if declining:
             markdown_content += "#### 📉 衰退板块\n\n"
             for item in declining:
-                markdown_content += f"- **{item.get('sector', 'N/A')}**\n"
-                markdown_content += f"  - 轮动逻辑: {item.get('logic', 'N/A')}\n"
-                markdown_content += f"  - 时间窗口: {item.get('time_window', 'N/A')}\n"
-                markdown_content += f"  - 操作建议: {item.get('advice', 'N/A')}\n\n"
+                markdown_content += f"- **{item.get('sector', None)}**\n"
+                markdown_content += f"  - 轮动逻辑: {item.get('logic', None)}\n"
+                markdown_content += f"  - 时间窗口: {item.get('time_window', None)}\n"
+                markdown_content += f"  - 操作建议: {item.get('advice', None)}\n\n"
         
         # 3. 板块热度排行
         heat = predictions.get('heat', {})
@@ -948,19 +948,19 @@ def generate_sector_markdown_report(result_data: dict) -> str:
         if hottest:
             markdown_content += "#### 最热板块\n\n| 排名 | 板块 | 热度评分 | 趋势 | 持续性 |\n|------|------|----------|------|--------|\n"
             for idx, item in enumerate(hottest[:10], 1):
-                markdown_content += f"| {idx} | {item.get('sector', 'N/A')} | {item.get('score', 0)} | {item.get('trend', 'N/A')} | {item.get('sustainability', 'N/A')} |\n"
+                markdown_content += f"| {idx} | {item.get('sector', None)} | {item.get('score', 0)} | {item.get('trend', None)} | {item.get('sustainability', None)} |\n"
             markdown_content += "\n"
         
         if heating:
             markdown_content += "#### 升温板块\n\n"
             for idx, item in enumerate(heating[:5], 1):
-                markdown_content += f"{idx}. {item.get('sector', 'N/A')} (评分: {item.get('score', 0)})\n"
+                markdown_content += f"{idx}. {item.get('sector', None)} (评分: {item.get('score', 0)})\n"
             markdown_content += "\n"
         
         if cooling:
             markdown_content += "#### 降温板块\n\n"
             for idx, item in enumerate(cooling[:5], 1):
-                markdown_content += f"{idx}. {item.get('sector', 'N/A')} (评分: {item.get('score', 0)})\n"
+                markdown_content += f"{idx}. {item.get('sector', None)} (评分: {item.get('score', 0)})\n"
             markdown_content += "\n"
         
         # 4. 策略总结

@@ -159,8 +159,8 @@ def display_stock_results(stocks_df: pd.DataFrame, selector):
     st.markdown("### 📋 精选低估值股票")
 
     for idx, row in stocks_df.iterrows():
-        code = row.get('股票代码', 'N/A')
-        name = row.get('股票简称', 'N/A')
+        code = row.get('股票代码', None)
+        name = row.get('股票简称', None)
 
         # 获取关键指标用于标题
         pe_val = ''
@@ -234,7 +234,7 @@ def display_stock_detail(row: pd.Series, df: pd.DataFrame):
             return False
         if isinstance(value, float) and pd.isna(value):
             return False
-        if isinstance(value, str) and value.strip() in ('', 'N/A', 'nan', 'None'):
+        if isinstance(value, str) and value.strip() in ('', None, 'nan', 'None'):
             return False
         return True
 
@@ -327,7 +327,7 @@ def run_strategy_simulation(stocks_df: pd.DataFrame):
 
     for idx, row in stocks_df.head(strategy.max_daily_buy).iterrows():
         code = str(row.get('股票代码', '')).split('.')[0]
-        name = row.get('股票简称', 'N/A')
+        name = row.get('股票简称', None)
 
         # 尝试获取价格
         price = 0

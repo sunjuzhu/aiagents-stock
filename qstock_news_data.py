@@ -237,8 +237,8 @@ class QStockNewsDataFetcher:
             news_data = data["news_data"]
             text_parts.append(f"""
 【最新新闻 - akshare数据源】
-查询时间：{news_data.get('query_time', 'N/A')}
-时间范围：{news_data.get('date_range', 'N/A')}
+查询时间：{news_data.get('query_time', None)}
+时间范围：{news_data.get('date_range', None)}
 新闻数量：{news_data.get('count', 0)}条
 
 """)

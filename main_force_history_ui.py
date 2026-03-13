@@ -105,13 +105,13 @@ def display_batch_history():
                         final_decision = r.get('final_decision', {})
                         
                         table_data.append({
-                            '代码': r.get('symbol', 'N/A'),
-                            '名称': stock_info.get('name', stock_info.get('股票名称', 'N/A')),
-                            '评级': final_decision.get('rating', final_decision.get('investment_rating', 'N/A')),
-                            '信心度': final_decision.get('confidence_level', 'N/A'),
-                            '进场区间': final_decision.get('entry_range', 'N/A'),
-                            '止盈位': final_decision.get('take_profit', 'N/A'),
-                            '止损位': final_decision.get('stop_loss', 'N/A')
+                            '代码': r.get('symbol', None),
+                            '名称': stock_info.get('name', stock_info.get('股票名称', None)),
+                            '评级': final_decision.get('rating', final_decision.get('investment_rating', None)),
+                            '信心度': final_decision.get('confidence_level', None),
+                            '进场区间': final_decision.get('entry_range', None),
+                            '止盈位': final_decision.get('take_profit', None),
+                            '止损位': final_decision.get('stop_loss', None)
                         })
                     
                     df = pd.DataFrame(table_data)
@@ -135,7 +135,7 @@ def display_batch_history():
                             stock_info = r.get('stock_info', {})
                             final_decision = r.get('final_decision', {})
                             
-                            st.markdown(f"### {r.get('symbol', 'N/A')} - {stock_info.get('name', stock_info.get('股票名称', 'N/A'))}")
+                            st.markdown(f"### {r.get('symbol', None)} - {stock_info.get('name', stock_info.get('股票名称', None))}")
                             
                             # 投资建议
                             st.markdown("#### 💡 投资建议")
@@ -154,7 +154,7 @@ def display_batch_history():
                     fail_data = []
                     for r in failed_results:
                         fail_data.append({
-                            '代码': r.get('symbol', 'N/A'),
+                            '代码': r.get('symbol', None),
                             '错误原因': r.get('error', '未知错误')
                         })
                     

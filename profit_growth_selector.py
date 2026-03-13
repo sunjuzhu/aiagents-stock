@@ -92,23 +92,23 @@ class ProfitGrowthSelector:
         
         lines = []
         for idx, row in df.iterrows():
-            stock_code = row.get('股票代码', 'N/A')
-            stock_name = row.get('股票简称', 'N/A')
-            profit_growth = row.get('净利润增长率', row.get('净利润同比增长率', 'N/A'))
-            turnover = row.get('成交额', row.get('成交额[20241213]', 'N/A'))
+            stock_code = row.get('股票代码', None)
+            stock_name = row.get('股票简称', None)
+            profit_growth = row.get('净利润增长率', row.get('净利润同比增长率', None))
+            turnover = row.get('成交额', row.get('成交额[20241213]', None))
             
             line = f"{idx+1}. {stock_code} {stock_name}"
             
             # 添加详细信息
             details = []
             
-            if profit_growth != 'N/A':
+            if profit_growth != None:
                 try:
                     details.append(f"净利增长:{float(profit_growth):.2f}%")
                 except:
                     pass
             
-            if turnover != 'N/A':
+            if turnover != None:
                 try:
                     turnover_val = float(turnover)
                     if turnover_val >= 100000000:

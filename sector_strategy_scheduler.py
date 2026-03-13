@@ -342,7 +342,7 @@ class SectorStrategyScheduler:
             if potential:
                 lines.append("#### 🔄 潜力接力板块")
                 for item in potential:
-                    lines.append(f"- {item.get('sector')}: {item.get('advice', 'N/A')}")
+                    lines.append(f"- {item.get('sector')}: {item.get('advice', None)}")
                 lines.append("")
         
         # 板块热度TOP3
@@ -453,9 +453,9 @@ class SectorStrategyScheduler:
                 body_parts.append("【看多板块】")
                 body_parts.append("")
                 for idx, item in enumerate(bullish, 1):
-                    body_parts.append(f"{idx}. {item.get('sector', 'N/A')} (信心度: {item.get('confidence', 0)}/10)")
-                    body_parts.append(f"   理由: {item.get('reason', 'N/A')}")
-                    body_parts.append(f"   风险: {item.get('risk', 'N/A')}")
+                    body_parts.append(f"{idx}. {item.get('sector', None)} (信心度: {item.get('confidence', 0)}/10)")
+                    body_parts.append(f"   理由: {item.get('reason', None)}")
+                    body_parts.append(f"   风险: {item.get('risk', None)}")
                     body_parts.append("")
             
             # 看空板块
@@ -464,9 +464,9 @@ class SectorStrategyScheduler:
                 body_parts.append("【看空板块】")
                 body_parts.append("")
                 for idx, item in enumerate(bearish, 1):
-                    body_parts.append(f"{idx}. {item.get('sector', 'N/A')} (信心度: {item.get('confidence', 0)}/10)")
-                    body_parts.append(f"   理由: {item.get('reason', 'N/A')}")
-                    body_parts.append(f"   风险: {item.get('risk', 'N/A')}")
+                    body_parts.append(f"{idx}. {item.get('sector', None)} (信心度: {item.get('confidence', 0)}/10)")
+                    body_parts.append(f"   理由: {item.get('reason', None)}")
+                    body_parts.append(f"   风险: {item.get('risk', None)}")
                     body_parts.append("")
         
         # 2. 板块轮动
@@ -484,10 +484,10 @@ class SectorStrategyScheduler:
                 body_parts.append("【当前强势板块】")
                 body_parts.append("")
                 for item in current_strong:
-                    body_parts.append(f"• {item.get('sector', 'N/A')}")
-                    body_parts.append(f"  轮动逻辑: {item.get('logic', 'N/A')[:100]}...")
-                    body_parts.append(f"  时间窗口: {item.get('time_window', 'N/A')}")
-                    body_parts.append(f"  操作建议: {item.get('advice', 'N/A')}")
+                    body_parts.append(f"• {item.get('sector', None)}")
+                    body_parts.append(f"  轮动逻辑: {item.get('logic', None)[:100]}...")
+                    body_parts.append(f"  时间窗口: {item.get('time_window', None)}")
+                    body_parts.append(f"  操作建议: {item.get('advice', None)}")
                     body_parts.append("")
             
             # 潜力接力
@@ -496,10 +496,10 @@ class SectorStrategyScheduler:
                 body_parts.append("【潜力接力板块】⭐ 重点关注")
                 body_parts.append("")
                 for item in potential:
-                    body_parts.append(f"• {item.get('sector', 'N/A')}")
-                    body_parts.append(f"  轮动逻辑: {item.get('logic', 'N/A')[:100]}...")
-                    body_parts.append(f"  时间窗口: {item.get('time_window', 'N/A')}")
-                    body_parts.append(f"  操作建议: {item.get('advice', 'N/A')}")
+                    body_parts.append(f"• {item.get('sector', None)}")
+                    body_parts.append(f"  轮动逻辑: {item.get('logic', None)[:100]}...")
+                    body_parts.append(f"  时间窗口: {item.get('time_window', None)}")
+                    body_parts.append(f"  操作建议: {item.get('advice', None)}")
                     body_parts.append("")
         
         # 3. 板块热度
@@ -517,7 +517,7 @@ class SectorStrategyScheduler:
                 body_parts.append("【最热板块 TOP5】")
                 body_parts.append("")
                 for idx, item in enumerate(hottest, 1):
-                    body_parts.append(f"{idx}. {item.get('sector', 'N/A')} - 热度: {item.get('score', 0)}分 ({item.get('trend', 'N/A')})")
+                    body_parts.append(f"{idx}. {item.get('sector', None)} - 热度: {item.get('score', 0)}分 ({item.get('trend', None)})")
                 body_parts.append("")
             
             # 升温板块
@@ -526,7 +526,7 @@ class SectorStrategyScheduler:
                 body_parts.append("【升温板块】")
                 body_parts.append("")
                 for idx, item in enumerate(heating, 1):
-                    body_parts.append(f"{idx}. {item.get('sector', 'N/A')} - 热度: {item.get('score', 0)}分 ↗")
+                    body_parts.append(f"{idx}. {item.get('sector', None)} - 热度: {item.get('score', 0)}分 ↗")
                 body_parts.append("")
         
         # 4. 策略总结

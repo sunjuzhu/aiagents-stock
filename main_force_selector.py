@@ -48,21 +48,21 @@ class MainForceStockSelector:
             # 构建查询语句 - 使用多个备选方案，所有方案都要求计算区间涨跌幅
             queries = [
                 # 方案1: 完整查询（最优）
-                f"{start_date}以来主力资金净流入排名，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿之间，非科创非st，"
+                f"{start_date}以来主力资金净流入排名，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿之间，非st，非创业板，非科创板，非京交，"
                 f"所属同花顺行业，总市值，净利润，营收，市盈率，市净率，"
                 f"盈利能力评分，成长能力评分，营运能力评分，偿债能力评分，"
                 f"现金流评分，资产质量评分，流动性评分，资本充足性评分",
                 
                 # 方案2: 简化查询
-                f"{start_date}以来主力资金净流入，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿，非科创非st，"
+                f"{start_date}以来主力资金净流入，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿，非st，非创业板，非科创板，"
                 f"所属同花顺行业，总市值，净利润，营收，市盈率，市净率",
                 
                 # 方案3: 基础查询
-                f"{start_date}以来主力资金净流入排名，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿，非科创非st，"
+                f"{start_date}以来主力资金净流入排名，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿，非st，非创业板，非科创板，"
                 f"所属行业，总市值",
                 
                 # 方案4: 最简查询
-                f"{start_date}以来主力资金净流入前100名，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿，非st非科创板，所属行业，总市值",
+                f"{start_date}以来主力资金净流入前100名，并计算区间涨跌幅，市值{min_market_cap}-{max_market_cap}亿，非st，非创业板，非科创板，所属行业，总市值",
             ]
             
             # 尝试不同的查询方案
@@ -297,16 +297,16 @@ class MainForceStockSelector:
         
         for idx, row in df.iterrows():
             stock_data = {
-                'symbol': row.get('股票代码', 'N/A'),
-                'name': row.get('股票简称', 'N/A'),
-                'industry': row.get('所属同花顺行业', row.get('所属行业', 'N/A')),
-                'market_cap': row.get('总市值[20241209]', row.get('总市值', 'N/A')),
+                'symbol': row.get('股票代码', None),
+                'name': row.get('股票简称', None),
+                'industry': row.get('所属同花顺行业', row.get('所属行业', None)),
+                'market_cap': row.get('总市值[20241209]', row.get('总市值', None)),
                 'range_change': None,
                 'main_fund_inflow': None,
-                'pe_ratio': row.get('市盈率', 'N/A'),
-                'pb_ratio': row.get('市净率', 'N/A'),
-                'revenue': row.get('营业收入', row.get('营收', 'N/A')),
-                'net_profit': row.get('净利润', 'N/A'),
+                'pe_ratio': row.get('市盈率', None),
+                'pb_ratio': row.get('市净率', None),
+                'revenue': row.get('营业收入', row.get('营收', None)),
+                'net_profit': row.get('净利润', None),
                 'scores': {},
                 'raw_data': row.to_dict()
             }
@@ -325,7 +325,7 @@ class MainForceStockSelector:
                 if interval_pct_col:
                     break
             if interval_pct_col:
-                stock_data['range_change'] = row.get(interval_pct_col, 'N/A')
+                stock_data['range_change'] = row.get(interval_pct_col, None)
             
             # 提取主力资金（智能匹配）
             main_fund_col = None
@@ -339,13 +339,13 @@ class MainForceStockSelector:
                     main_fund_col = matching[0]
                     break
             if main_fund_col:
-                stock_data['main_fund_inflow'] = row.get(main_fund_col, 'N/A')
+                stock_data['main_fund_inflow'] = row.get(main_fund_col, None)
             
             # 提取评分
             score_keywords = ['评分', '能力']
             for col in df.columns:
                 if any(keyword in col for keyword in score_keywords):
-                    stock_data['scores'][col] = row.get(col, 'N/A')
+                    stock_data['scores'][col] = row.get(col, None)
             
             stock_list.append(stock_data)
         
@@ -361,8 +361,8 @@ class MainForceStockSelector:
         
         for i, stock in enumerate(stock_list, 1):
             symbol = stock['symbol']
-            name = stock['name'][:10] if isinstance(stock['name'], str) else 'N/A'
-            industry = stock['industry'][:13] if isinstance(stock['industry'], str) else 'N/A'
+            name = stock['name'][:10] if isinstance(stock['name'], str) else None
+            industry = stock['industry'][:13] if isinstance(stock['industry'], str) else None
             
             # 格式化主力资金
             main_fund = stock['main_fund_inflow']
@@ -372,14 +372,14 @@ class MainForceStockSelector:
                 else:
                     main_fund_str = f"{main_fund/10000:.2f}万"
             else:
-                main_fund_str = 'N/A'
+                main_fund_str = None
             
             # 格式化涨跌幅
             change = stock['range_change']
             if isinstance(change, (int, float)):
                 change_str = f"{change:.2f}%"
             else:
-                change_str = 'N/A'
+                change_str = None
             
             print(f"{i:<4} {symbol:<8} {name:<12} {industry:<15} {main_fund_str:<12} {change_str:<8}")
         

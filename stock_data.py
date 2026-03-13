@@ -134,9 +134,9 @@ class StockDataFetcher:
                         )
                         if df is not None and not df.empty:
                             row = df.iloc[0]
-                            info['pe_ratio'] = row.get('pe', 'N/A')
-                            info['pb_ratio'] = row.get('pb', 'N/A')
-                            info['market_cap'] = row.get('total_mv', 'N/A')
+                            info['pe_ratio'] = row.get('pe', None)
+                            info['pb_ratio'] = row.get('pb', None)
+                            info['market_cap'] = row.get('total_mv', None)
                             print(f"[Tushare] ✅ 成功获取部分信息")
                     except Exception as te:
                         print(f"[Tushare] ❌ 获取失败: {te}")
@@ -149,13 +149,13 @@ class StockDataFetcher:
             #         stock_real_time = real_time_data[real_time_data['代码'] == symbol]
             #         if not stock_real_time.empty:
             #             row = stock_real_time.iloc[0]
-            #             info['current_price'] = row.get('最新价', 'N/A')
-            #             info['change_percent'] = row.get('涨跌幅', 'N/A')
+            #             info['current_price'] = row.get('最新价', None)
+            #             info['change_percent'] = row.get('涨跌幅', None)
             #             if info['name'] == '未知':
             #                 info['name'] = row.get('名称', '未知')
                         
             #             # 如果实时数据中有市盈率和市净率，优先使用
-            #             if '市盈率-动态' in row and info['pe_ratio'] == 'N/A':
+            #             if '市盈率-动态' in row and info['pe_ratio'] == None:
             #                 try:
             #                     pe_val = row['市盈率-动态']
             #                     if pe_val and pe_val != '-':
@@ -165,7 +165,7 @@ class StockDataFetcher:
             #                 except:
             #                     pass
                         
-            #             if '市净率' in row and info['pb_ratio'] == 'N/A':
+            #             if '市净率' in row and info['pb_ratio'] == None:
             #                 try:
             #                     pb_val = row['市净率']
             #                     if pb_val and pb_val != '-':
@@ -202,7 +202,7 @@ class StockDataFetcher:
                 print(f"获取历史数据也失败: {e2}")
             
             # 方法3: 使用百度估值数据获取市盈率和市净率
-            if info['pe_ratio'] == 'N/A':
+            if info['pe_ratio'] == None:
                 try:
                     pe_data = ak.stock_zh_valuation_baidu(symbol=symbol, indicator="市盈率(TTM)")
                     if pe_data is not None and not pe_data.empty:
@@ -214,7 +214,7 @@ class StockDataFetcher:
                 except Exception as e:
                     print(f"获取市盈率失败: {e}")
             
-            if info['pb_ratio'] == 'N/A':
+            if info['pb_ratio'] == None:
                 try:
                     pb_data = ak.stock_zh_valuation_baidu(symbol=symbol, indicator="市净率")
                     if pb_data is not None and not pb_data.empty:
@@ -272,20 +272,20 @@ class StockDataFetcher:
                     if not stock_data.empty:
                         row = stock_data.iloc[0]
                         info['name'] = row.get('名称', '未知')
-                        info['current_price'] = row.get('最新价', 'N/A')
-                        info['change_percent'] = row.get('涨跌幅', 'N/A')
+                        info['current_price'] = row.get('最新价', None)
+                        info['change_percent'] = row.get('涨跌幅', None)
                         
                         # 市值（港元）
-                        market_cap = row.get('总市值', 'N/A')
-                        if market_cap != 'N/A':
+                        market_cap = row.get('总市值', None)
+                        if market_cap != None:
                             try:
                                 info['market_cap'] = float(market_cap)
                             except:
                                 pass
                         
                         # 市盈率
-                        pe = row.get('市盈率', 'N/A')
-                        if pe != 'N/A' and pe != '-':
+                        pe = row.get('市盈率', None)
+                        if pe != None and pe != '-':
                             try:
                                 pe_val = float(pe)
                                 if 0 < pe_val <= 1000:
@@ -296,7 +296,7 @@ class StockDataFetcher:
                 print(f"获取港股实时数据失败: {e}")
             
             # 方法2: 尝试使用历史数据获取价格信息
-            if info['current_price'] == 'N/A':
+            if info['current_price'] == None:
                 try:
                     hist_df = ak.stock_hk_hist(symbol=hk_code, period="daily", 
                                               start_date=(datetime.now() - timedelta(days=5)).strftime('%Y%m%d'),
@@ -348,53 +348,53 @@ class StockDataFetcher:
                         prev_close = hist['Close'].iloc[-2]
                         change_percent = ((current_price - prev_close) / prev_close) * 100
                     else:
-                        change_percent = 'N/A'
+                        change_percent = None
                 else:
-                    current_price = 'N/A'
-                    change_percent = 'N/A'
+                    current_price = None
+                    change_percent = None
             except:
-                current_price = 'N/A'
-                change_percent = 'N/A'
+                current_price = None
+                change_percent = None
             
             # 获取基本信息
             try:
                 info = ticker.info
                 
                 # 获取市盈率，优先使用trailing PE，其次forward PE
-                pe_ratio = info.get('trailingPE', info.get('forwardPE', 'N/A'))
-                if pe_ratio == 'N/A' or pe_ratio is None or (isinstance(pe_ratio, float) and np.isnan(pe_ratio)):
-                    pe_ratio = 'N/A'
+                pe_ratio = info.get('trailingPE', info.get('forwardPE', None))
+                if pe_ratio == None or pe_ratio is None or (isinstance(pe_ratio, float) and np.isnan(pe_ratio)):
+                    pe_ratio = None
                 
                 # 获取市净率
-                pb_ratio = info.get('priceToBook', 'N/A')
-                if pb_ratio == 'N/A' or pb_ratio is None or (isinstance(pb_ratio, float) and np.isnan(pb_ratio)):
-                    pb_ratio = 'N/A'
+                pb_ratio = info.get('priceToBook', None)
+                if pb_ratio == None or pb_ratio is None or (isinstance(pb_ratio, float) and np.isnan(pb_ratio)):
+                    pb_ratio = None
                 
                 # 如果历史数据没有获取到价格，尝试从info获取
-                if current_price == 'N/A':
-                    current_price = info.get('currentPrice', info.get('regularMarketPrice', 'N/A'))
+                if current_price == None:
+                    current_price = info.get('currentPrice', info.get('regularMarketPrice', None))
                 
-                if change_percent == 'N/A':
-                    change_percent = info.get('regularMarketChangePercent', 'N/A')
-                    if change_percent != 'N/A' and change_percent is not None:
+                if change_percent == None:
+                    change_percent = info.get('regularMarketChangePercent', None)
+                    if change_percent != None and change_percent is not None:
                         change_percent = change_percent * 100  # 转换为百分比
                 
                 return {
                     "symbol": symbol,
-                    "name": info.get('longName', info.get('shortName', 'N/A')),
+                    "name": info.get('longName', info.get('shortName', None)),
                     "current_price": current_price,
                     "change_percent": change_percent,
-                    "market_cap": info.get('marketCap', 'N/A'),
+                    "market_cap": info.get('marketCap', None),
                     "pe_ratio": pe_ratio,
                     "pb_ratio": pb_ratio,
-                    "dividend_yield": info.get('dividendYield', 'N/A'),
-                    "beta": info.get('beta', 'N/A'),
-                    "52_week_high": info.get('fiftyTwoWeekHigh', 'N/A'),
-                    "52_week_low": info.get('fiftyTwoWeekLow', 'N/A'),
-                    "sector": info.get('sector', 'N/A'),
-                    "industry": info.get('industry', 'N/A'),
+                    "dividend_yield": info.get('dividendYield', None),
+                    "beta": info.get('beta', None),
+                    "52_week_high": info.get('fiftyTwoWeekHigh', None),
+                    "52_week_low": info.get('fiftyTwoWeekLow', None),
+                    "sector": info.get('sector', None),
+                    "industry": info.get('industry', None),
                     "market": "美股",
-                    "exchange": info.get('exchange', 'N/A')
+                    "exchange": info.get('exchange', None)
                 }
                 
             except Exception as e:
@@ -404,17 +404,17 @@ class StockDataFetcher:
                     "name": f"美股{symbol}",
                     "current_price": current_price,
                     "change_percent": change_percent,
-                    "market_cap": 'N/A',
-                    "pe_ratio": 'N/A',
-                    "pb_ratio": 'N/A',
-                    "dividend_yield": 'N/A',
-                    "beta": 'N/A',
-                    "52_week_high": 'N/A',
-                    "52_week_low": 'N/A',
-                    "sector": 'N/A',
-                    "industry": 'N/A',
+                    "market_cap": None,
+                    "pe_ratio": None,
+                    "pb_ratio": None,
+                    "dividend_yield": None,
+                    "beta": None,
+                    "52_week_high": None,
+                    "52_week_low": None,
+                    "sector": None,
+                    "industry": None,
                     "market": "美股",
-                    "exchange": 'N/A'
+                    "exchange": None
                 }
                 
         except Exception as e:
@@ -662,7 +662,7 @@ class StockDataFetcher:
                             # 提取每个指标的最新值
                             for _, row in indicator_rows.iterrows():
                                 indicator_name = row['指标']
-                                value = row.get(latest_date, 'N/A')
+                                value = row.get(latest_date, None)
                                 if value is not None and not (isinstance(value, float) and pd.isna(value)):
                                     try:
                                         financial_ratios[indicator_name] = str(value)
@@ -716,26 +716,26 @@ class StockDataFetcher:
                     
                     # 整理财务比率数据
                     financial_data["financial_ratios"] = {
-                        "基本每股收益": self._safe_convert(indicator_dict.get('基本每股收益(元)', 'N/A')),
-                        "每股净资产": self._safe_convert(indicator_dict.get('每股净资产(元)', 'N/A')),
-                        "每股股息TTM": self._safe_convert(indicator_dict.get('每股股息TTM(港元)', 'N/A')),
-                        "派息比率": self._safe_convert(indicator_dict.get('派息比率(%)', 'N/A')),
-                        "每股经营现金流": self._safe_convert(indicator_dict.get('每股经营现金流(元)', 'N/A')),
-                        "股息率TTM": self._safe_convert(indicator_dict.get('股息率TTM(%)', 'N/A')),
-                        "总市值": self._safe_convert(indicator_dict.get('总市值(港元)', 'N/A')),
-                        "港股市值": self._safe_convert(indicator_dict.get('港股市值(港元)', 'N/A')),
-                        "营业总收入": self._safe_convert(indicator_dict.get('营业总收入', 'N/A')),
-                        "营业收入环比增长": self._safe_convert(indicator_dict.get('营业总收入滚动环比增长(%)', 'N/A')),
-                        "销售净利率": self._safe_convert(indicator_dict.get('销售净利率(%)', 'N/A')),
-                        "净利润": self._safe_convert(indicator_dict.get('净利润', 'N/A')),
-                        "净利润环比增长": self._safe_convert(indicator_dict.get('净利润滚动环比增长(%)', 'N/A')),
-                        "ROE股东权益回报率": self._safe_convert(indicator_dict.get('股东权益回报率(%)', 'N/A')),
-                        "市盈率": self._safe_convert(indicator_dict.get('市盈率', 'N/A')),
-                        "市净率": self._safe_convert(indicator_dict.get('市净率', 'N/A')),
-                        "ROA总资产回报率": self._safe_convert(indicator_dict.get('总资产回报率(%)', 'N/A')),
-                        "法定股本": self._safe_convert(indicator_dict.get('法定股本(股)', 'N/A')),
-                        "已发行股本": self._safe_convert(indicator_dict.get('已发行股本(股)', 'N/A')),
-                        "每手股": self._safe_convert(indicator_dict.get('每手股', 'N/A')),
+                        "基本每股收益": self._safe_convert(indicator_dict.get('基本每股收益(元)', None)),
+                        "每股净资产": self._safe_convert(indicator_dict.get('每股净资产(元)', None)),
+                        "每股股息TTM": self._safe_convert(indicator_dict.get('每股股息TTM(港元)', None)),
+                        "派息比率": self._safe_convert(indicator_dict.get('派息比率(%)', None)),
+                        "每股经营现金流": self._safe_convert(indicator_dict.get('每股经营现金流(元)', None)),
+                        "股息率TTM": self._safe_convert(indicator_dict.get('股息率TTM(%)', None)),
+                        "总市值": self._safe_convert(indicator_dict.get('总市值(港元)', None)),
+                        "港股市值": self._safe_convert(indicator_dict.get('港股市值(港元)', None)),
+                        "营业总收入": self._safe_convert(indicator_dict.get('营业总收入', None)),
+                        "营业收入环比增长": self._safe_convert(indicator_dict.get('营业总收入滚动环比增长(%)', None)),
+                        "销售净利率": self._safe_convert(indicator_dict.get('销售净利率(%)', None)),
+                        "净利润": self._safe_convert(indicator_dict.get('净利润', None)),
+                        "净利润环比增长": self._safe_convert(indicator_dict.get('净利润滚动环比增长(%)', None)),
+                        "ROE股东权益回报率": self._safe_convert(indicator_dict.get('股东权益回报率(%)', None)),
+                        "市盈率": self._safe_convert(indicator_dict.get('市盈率', None)),
+                        "市净率": self._safe_convert(indicator_dict.get('市净率', None)),
+                        "ROA总资产回报率": self._safe_convert(indicator_dict.get('总资产回报率(%)', None)),
+                        "法定股本": self._safe_convert(indicator_dict.get('法定股本(股)', None)),
+                        "已发行股本": self._safe_convert(indicator_dict.get('已发行股本(股)', None)),
+                        "每手股": self._safe_convert(indicator_dict.get('每手股', None)),
                     }
                     
                     print(f"✅ 成功获取港股 {hk_code} 的财务指标")
@@ -798,20 +798,20 @@ class StockDataFetcher:
             
             # 4. 财务比率（从info中提取）
             financial_data["financial_ratios"] = {
-                "ROE": info.get('returnOnEquity', 'N/A'),
-                "ROA": info.get('returnOnAssets', 'N/A'),
-                "毛利率": info.get('grossMargins', 'N/A'),
-                "营业利润率": info.get('operatingMargins', 'N/A'),
-                "净利率": info.get('profitMargins', 'N/A'),
-                "资产负债率": info.get('debtToEquity', 'N/A'),
-                "流动比率": info.get('currentRatio', 'N/A'),
-                "速动比率": info.get('quickRatio', 'N/A'),
-                "EPS": info.get('trailingEps', 'N/A'),
-                "每股账面价值": info.get('bookValue', 'N/A'),
-                "股息率": info.get('dividendYield', 'N/A'),
-                "派息率": info.get('payoutRatio', 'N/A'),
-                "收入增长": info.get('revenueGrowth', 'N/A'),
-                "盈利增长": info.get('earningsGrowth', 'N/A'),
+                "ROE": info.get('returnOnEquity', None),
+                "ROA": info.get('returnOnAssets', None),
+                "毛利率": info.get('grossMargins', None),
+                "营业利润率": info.get('operatingMargins', None),
+                "净利率": info.get('profitMargins', None),
+                "资产负债率": info.get('debtToEquity', None),
+                "流动比率": info.get('currentRatio', None),
+                "速动比率": info.get('quickRatio', None),
+                "EPS": info.get('trailingEps', None),
+                "每股账面价值": info.get('bookValue', None),
+                "股息率": info.get('dividendYield', None),
+                "派息率": info.get('payoutRatio', None),
+                "收入增长": info.get('revenueGrowth', None),
+                "盈利增长": info.get('earningsGrowth', None),
             }
             
             return financial_data
@@ -862,7 +862,7 @@ class StockDataFetcher:
     def _safe_convert(self, value):
         """安全地转换数值"""
         if value is None or value == '' or (isinstance(value, float) and np.isnan(value)):
-            return 'N/A'
+            return None
         try:
             if isinstance(value, str):
                 # 移除百分号和逗号
@@ -875,9 +875,9 @@ class StockDataFetcher:
     def _calculate_main_fund_ratio(self, main_fund, total_fund):
         """计算主力资金占比"""
         try:
-            if main_fund != 'N/A' and total_fund != 'N/A' and total_fund != 0:
+            if main_fund != None and total_fund != None and total_fund != 0:
                 ratio = (main_fund / total_fund) * 100
                 return f"{ratio:.2f}%"
         except:
             pass
-        return 'N/A'
+        return None

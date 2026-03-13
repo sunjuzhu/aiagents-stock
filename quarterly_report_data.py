@@ -293,7 +293,7 @@ class QuarterlyReportDataFetcher:
         text_parts = []
         text_parts.append(f"""
 【季度财务报告数据 - akshare数据源】
-股票代码：{data.get('symbol', 'N/A')}
+股票代码：{data.get('symbol', None)}
 数据期数：最近{self.periods}期季报
 
 """)

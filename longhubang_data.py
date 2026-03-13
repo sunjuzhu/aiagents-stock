@@ -295,12 +295,12 @@ class LonghubangDataFetcher:
         text_parts.append("\n【详细交易记录 TOP50】")
         for idx, row in df.head(50).iterrows():
             text_parts.append(
-                f"{row.get('游资名称', 'N/A')} | "
-                f"{row.get('股票名称', 'N/A')}({row.get('股票代码', 'N/A')}) | "
+                f"{row.get('游资名称', None)} | "
+                f"{row.get('股票名称', None)}({row.get('股票代码', None)}) | "
                 f"买入:{row.get('买入金额', 0):,.0f} "
                 f"卖出:{row.get('卖出金额', 0):,.0f} "
                 f"净流入:{row.get('净流入金额', 0):,.0f} | "
-                f"日期:{row.get('日期', 'N/A')}"
+                f"日期:{row.get('日期', None)}"
             )
         
         return "\n".join(text_parts)

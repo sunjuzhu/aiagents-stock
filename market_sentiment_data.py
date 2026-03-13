@@ -339,11 +339,11 @@ class MarketSentimentDataFetcher:
                 stock_data = df[df['代码'] == symbol]
                 if not stock_data.empty:
                     row = stock_data.iloc[0]
-                    turnover_rate = row.get('换手率', 'N/A')
+                    turnover_rate = row.get('换手率', None)
                     
                     # 解读换手率
                     interpretation = ""
-                    if turnover_rate != 'N/A':
+                    if turnover_rate != None:
                         try:
                             turnover = float(turnover_rate)
                             if turnover > 20:
@@ -381,11 +381,11 @@ class MarketSentimentDataFetcher:
                     
                     if df is not None and not df.empty:
                         row = df.iloc[0]
-                        turnover_rate = row.get('turnover_rate', 'N/A')
+                        turnover_rate = row.get('turnover_rate', None)
                         
                         # 解读换手率
                         interpretation = ""
-                        if turnover_rate != 'N/A':
+                        if turnover_rate != None:
                             try:
                                 turnover = float(turnover_rate)
                                 if turnover > 20:
@@ -586,10 +586,10 @@ class MarketSentimentDataFetcher:
                     # 获取最新数据
                     latest = df.iloc[-1]
                     return {
-                        "margin_balance": latest.get('融资余额', 'N/A'),
-                        "short_balance": latest.get('融券余额', 'N/A'),
+                        "margin_balance": latest.get('融资余额', None),
+                        "short_balance": latest.get('融券余额', None),
                         "interpretation": ["市场整体融资融券数据"],
-                        "date": latest.get('交易日期', 'N/A')
+                        "date": latest.get('交易日期', None)
                     }
             except:
                 pass
@@ -669,17 +669,17 @@ class MarketSentimentDataFetcher:
             text_parts.append(f"""
 【ARBR市场情绪指标】
 - 计算周期：{arbr.get('period', 26)}日
-- AR值：{arbr.get('latest_ar', 'N/A'):.2f}（人气指标）
-- BR值：{arbr.get('latest_br', 'N/A'):.2f}（意愿指标）
-- 信号：{arbr.get('signals', {}).get('overall_signal', 'N/A')}
+- AR值：{arbr.get('latest_ar', None):.2f}（人气指标）
+- BR值：{arbr.get('latest_br', None):.2f}（意愿指标）
+- 信号：{arbr.get('signals', {}).get('overall_signal', None)}
 - 解读：
 {chr(10).join(['  * ' + item for item in arbr.get('interpretation', [])])}
 
 ARBR统计数据：
 - AR历史均值：{arbr.get('statistics', {}).get('ar_mean', 0):.2f}
 - BR历史均值：{arbr.get('statistics', {}).get('br_mean', 0):.2f}
-- 历史买入信号比例：{arbr.get('signal_statistics', {}).get('buy_ratio', 'N/A')}
-- 历史卖出信号比例：{arbr.get('signal_statistics', {}).get('sell_ratio', 'N/A')}
+- 历史买入信号比例：{arbr.get('signal_statistics', {}).get('buy_ratio', None)}
+- 历史卖出信号比例：{arbr.get('signal_statistics', {}).get('sell_ratio', None)}
 """)
         
         # 换手率
@@ -687,8 +687,8 @@ ARBR统计数据：
             turnover = sentiment_data["turnover_rate"]
             text_parts.append(f"""
 【换手率数据】
-- 当前换手率：{turnover.get('current_turnover_rate', 'N/A')}%
-- 解读：{turnover.get('interpretation', 'N/A')}
+- 当前换手率：{turnover.get('current_turnover_rate', None)}%
+- 解读：{turnover.get('interpretation', None)}
 """)
         
         # 大盘情绪
@@ -696,15 +696,15 @@ ARBR统计数据：
             market = sentiment_data["market_index"]
             text_parts.append(f"""
 【大盘市场情绪】
-- 指数：{market.get('index_name', 'N/A')}
-- 涨跌幅：{market.get('change_percent', 'N/A')}%
+- 指数：{market.get('index_name', None)}
+- 涨跌幅：{market.get('change_percent', None)}%
 """)
             if market.get('sentiment_score'):
-                text_parts.append(f"""- 市场情绪得分：{market.get('sentiment_score', 'N/A')}
-- 涨家数：{market.get('up_count', 'N/A')}只
-- 跌家数：{market.get('down_count', 'N/A')}只
-- 平家数：{market.get('flat_count', 'N/A')}只
-- 市场情绪：{market.get('sentiment_interpretation', 'N/A')}
+                text_parts.append(f"""- 市场情绪得分：{market.get('sentiment_score', None)}
+- 涨家数：{market.get('up_count', None)}只
+- 跌家数：{market.get('down_count', None)}只
+- 平家数：{market.get('flat_count', None)}只
+- 市场情绪：{market.get('sentiment_interpretation', None)}
 """)
         
         # 涨跌停统计
@@ -714,8 +714,8 @@ ARBR统计数据：
 【涨跌停统计】
 - 涨停股数量：{limit.get('limit_up_count', 0)}只
 - 跌停股数量：{limit.get('limit_down_count', 0)}只
-- 涨停占比：{limit.get('limit_ratio', 'N/A')}
-- 解读：{limit.get('interpretation', 'N/A')}
+- 涨停占比：{limit.get('limit_ratio', None)}
+- 解读：{limit.get('interpretation', None)}
 """)
         
         # 融资融券
@@ -723,9 +723,9 @@ ARBR统计数据：
             margin = sentiment_data["margin_trading"]
             text_parts.append(f"""
 【融资融券数据】
-- 融资余额：{margin.get('margin_balance', 'N/A')}元
-- 融券余额：{margin.get('short_balance', 'N/A')}元
-- 融资买入额：{margin.get('margin_buy', 'N/A')}元
+- 融资余额：{margin.get('margin_balance', None)}元
+- 融券余额：{margin.get('short_balance', None)}元
+- 融资买入额：{margin.get('margin_buy', None)}元
 - 解读：{'; '.join(margin.get('interpretation', []))}
 """)
         
@@ -734,9 +734,9 @@ ARBR统计数据：
             fear_greed = sentiment_data["fear_greed_index"]
             text_parts.append(f"""
 【市场恐慌贪婪指数】
-- 指数得分：{fear_greed.get('score', 'N/A')}/100
-- 情绪等级：{fear_greed.get('level', 'N/A')}
-- 解读：{fear_greed.get('interpretation', 'N/A')}
+- 指数得分：{fear_greed.get('score', None)}/100
+- 情绪等级：{fear_greed.get('level', None)}
+- 解读：{fear_greed.get('interpretation', None)}
 """)
         
         return "\n".join(text_parts)

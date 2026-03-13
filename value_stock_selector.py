@@ -100,13 +100,13 @@ class ValueStockSelector:
             # 显示选中的股票
             print(f"\n✅ 选中的股票:")
             for idx, row in selected.iterrows():
-                code = row.get('股票代码', 'N/A')
-                name = row.get('股票简称', 'N/A')
-                pe = row.get('市盈率', row.get('市盈率(动态)', 'N/A'))
-                pb = row.get('市净率', 'N/A')
-                div_rate = row.get('股息率', 'N/A')
-                debt_ratio = row.get('资产负债率', 'N/A')
-                cap = row.get('流通市值', 'N/A')
+                code = row.get('股票代码', None)
+                name = row.get('股票简称', None)
+                pe = row.get('市盈率', row.get('市盈率(动态)', None))
+                pb = row.get('市净率', None)
+                div_rate = row.get('股息率', None)
+                debt_ratio = row.get('资产负债率', None)
+                cap = row.get('流通市值', None)
                 print(f"  {idx+1}. {code} {name} - PE:{pe} PB:{pb} 股息率:{div_rate}% 负债率:{debt_ratio}% 流通市值:{cap}")
 
             print(f"{'='*60}\n")
