@@ -52,46 +52,38 @@ class LLMClient:
         except Exception as e:
             return f"API调用失败: {str(e)}"
     
+
+
     def technical_analysis(self, stock_info: Dict, stock_data: Any, indicators: Dict) -> str:
-        """技术面分析"""
+        """技术面分析 - 深度优化版：强化量价背离与分时图逃命信号"""
         prompt = f"""
-你是一名资深的技术分析师。请基于以下股票数据进行专业的技术面分析：
-必须识别‘缩量上涨’的诱多特征。若股价反抽但成交量不及前一波下跌的 1/2，必须判定为‘虚假繁荣’。强制对比分时图白线与黄线：白线在下，任何金叉都是逃命信号，而非买入信号。
-股票信息：
-- 股票代码：{stock_info.get('symbol', None)}
-- 股票名称：{stock_info.get('name', None)}
-- 当前价格：{stock_info.get('current_price', None)}
-- 涨跌幅：{stock_info.get('change_percent', None)}%
+你是一名拥有20年实战经验的顶级首席技术分析师，擅长识破主力的诱多/诱空陷阱。请基于以下数据进行穿透式分析：
+【核心实战强制准则 - 严禁违反】
+1. **量价一致性校验**：若股价处于反弹/上涨，但成交量（或量比）不及前一波下跌均值的 1/2，或相比5日均量萎缩超过 30%，必须在报告开头首行标注：'【警告：缩量上涨，确认为虚假繁荣诱多，严禁看多】'。
+2. **分时图生死线**：强制对比白线（现价）与黄线（均价）。若白线在黄线下方运行，所有的 KDJ/MACD 低位金叉必须定义为“弱势反抽”或“离场信号”，绝对禁止判定为“买点”。
+3. **乖离率压测**：若股价偏离 5日均线 或 分时黄线 超过 3%，必须提示“严重超买/乖离过高，严禁追涨”。
 
-最新技术指标：
-- 收盘价：{indicators.get('price', None)}
-- MA5：{indicators.get('ma5', None)}
-- MA10：{indicators.get('ma10', None)}
-- MA20：{indicators.get('ma20', None)}
-- MA60：{indicators.get('ma60', None)}
-- RSI：{indicators.get('rsi', None)}
-- MACD：{indicators.get('macd', None)}
-- MACD信号线：{indicators.get('macd_signal', None)}
-- 布林带上轨：{indicators.get('bb_upper', None)}
-- 布林带下轨：{indicators.get('bb_lower', None)}
-- K值：{indicators.get('k_value', None)}
-- D值：{indicators.get('d_value', None)}
-- 量比：{indicators.get('volume_ratio', None)}
+【股票实时行情】
+- 股票代码：{stock_info.get('symbol', 'None')} | 名称：{stock_info.get('name', 'None')}
+- 当前价格：{stock_info.get('current_price', 'None')} | 涨跌幅：{stock_info.get('change_percent', 'None')}%
 
-请从以下角度进行分析：
-1. 趋势分析（均线系统、价格走势）
-2. 超买超卖分析（RSI、KDJ）
-3. 动量分析（MACD）
-4. 支撑阻力分析（布林带）
-5. 成交量分析
-6. 短期、中期、长期技术判断
-7. 关键技术位分析
-8. 在分析趋势时，必须对比分时白线与黄线的位置关系。若白线在黄线下方，所有的 KDJ 低位金叉必须定义为‘弱势反抽’而非‘买入信号’。增加‘偏离度’检测：若股价远离黄线超过 3%，提示‘乖离率过高，严禁追涨，等待回踩’。
-请给出专业、详细的技术分析报告，包含风险提示。
+【多维度指标快照】
+- 均线：MA5({indicators.get('ma5', 'None')}), MA10({indicators.get('ma10', 'None')}), MA20({indicators.get('ma20', 'None')}), MA60({indicators.get('ma60', 'None')})
+- 动量/超买超卖：RSI({indicators.get('rsi', 'None')}), MACD({indicators.get('macd', 'None')}), K({indicators.get('k_value', 'None')}), D({indicators.get('d_value', 'None')})
+- 能量/空间：量比({indicators.get('volume_ratio', 'None')}), 布林上轨({indicators.get('bb_upper', 'None')}), 布林下轨({indicators.get('bb_lower', 'None')})
+
+【分析任务要求】
+请输出一份冷酷、专业的分析报告，涵盖以下内容：
+1. **趋势性质判定**：基于均线排列和当前价位，判断是主升、筑底、还是“无量阴跌”中的反抽。
+2. **信号有效性过滤**：结合【强制准则】，过滤掉所有虚假的指标金叉。重点分析分时白线与黄线的博弈。
+3. **关键位推演**：给出明确的压力位（上方筹码密集区）和支撑位（止损关键位）。
+4. **风险等级评估**：从 1-10 分评定当前追入的风险，并说明理由。
+5. **作战方案**：给出具体的“场景触发”建议（例如：若 30 分钟内不放量收复 XX 价位，视为逻辑失效，建议立刻撤退）。
+
+报告要求：言简意赅，直指要害，剔除所有模棱两可的废话。
 """
-        
         messages = [
-            {"role": "system", "content": "你是一名经验丰富的股票技术分析师，具有深厚的技术分析功底。"},
+            {"role": "system", "content": "你是一名冷酷的技术分析专家，你的唯一目标是帮投资者避开诱多陷阱并锁定真实趋势。"},
             {"role": "user", "content": prompt}
         ]
         
@@ -448,14 +440,24 @@ class LLMClient:
         response = self.call_api(messages, temperature=0.3, max_tokens=4000)
         
         try:
-            # 尝试解析JSON响应
             import re
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 decision_json = json.loads(json_match.group())
+                
+                # --- 新增优化：强制数值清理 ---
+                numeric_keys = ["target_price", "stop_loss", "take_profit", "confidence_level"]
+                for key in numeric_keys:
+                    val = decision_json.get(key)
+                    if isinstance(val, str):
+                        # 移除数字以外的字符（如 "元", "%"）
+                        clean_val = re.sub(r'[^\d.]', '', val)
+                        try:
+                            decision_json[key] = float(clean_val) if clean_val else None
+                        except:
+                            decision_json[key] = None
+                # ---------------------------
+                
                 return decision_json
-            else:
-                # 如果无法解析JSON，返回文本响应
-                return {"decision_text": response}
         except:
             return {"decision_text": response}

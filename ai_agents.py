@@ -306,7 +306,6 @@ class StockAnalysisAgents:
         print("✅ 最终投资决策完成")
         return decision
 
-
     def news_analyst_agent(self, stock_info: Dict, news_data: Dict = None) -> Dict[str, Any]:
             """新闻分析智能体 - 强化预期差与利好出货识别"""
             import time
@@ -355,7 +354,7 @@ class StockAnalysisAgents:
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
             }
 
-    def run_multi_agent_analysis(self, stock_info: Dict, stock_data: Any, indicators: Dict, 
+    def run_multi_agent_analysis(self, stock_info: Dict, stock_data: Any, indicators: Dict,     
                                     financial_data: Dict = None, fund_flow_data: Dict = None, 
                                     sentiment_data: Dict = None, news_data: Dict = None,
                                     quarterly_data: Dict = None, risk_data: Dict = None,
@@ -396,3 +395,5 @@ class StockAnalysisAgents:
             print("=" * 50)
             
             return agents_results
+    
+

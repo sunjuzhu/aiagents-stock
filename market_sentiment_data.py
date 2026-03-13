@@ -329,86 +329,105 @@ class MarketSentimentDataFetcher:
         }
     
     def _get_turnover_rate(self, symbol):
-        """获取换手率数据（支持akshare和tushare自动切换）"""
+
+
+        """
+        针对特殊格式 CSV 的换手率获取逻辑
+        """
+        turnover_rate = None
+        source_name = ""
+
         try:
-            # 优先使用akshare获取最近的换手率数据
-            print(f"   [Akshare] 正在获取换手率数据...")
-            # 获取A股实时行情数据（不需要参数）
-            df = ak.stock_zh_a_spot_em()
-            if df is not None and not df.empty:
-                stock_data = df[df['代码'] == symbol]
-                if not stock_data.empty:
-                    row = stock_data.iloc[0]
-                    turnover_rate = row.get('换手率', None)
-                    
-                    # 解读换手率
-                    interpretation = ""
-                    if turnover_rate != None:
-                        try:
-                            turnover = float(turnover_rate)
-                            if turnover > 20:
-                                interpretation = "换手率极高（>20%），资金活跃度极高，可能存在炒作"
-                            elif turnover > 10:
-                                interpretation = "换手率较高（>10%），交易活跃"
-                            elif turnover > 5:
-                                interpretation = "换手率正常（5%-10%），交易适中"
-                            elif turnover > 2:
-                                interpretation = "换手率偏低（2%-5%），交易相对清淡"
-                            else:
-                                interpretation = "换手率很低（<2%），交易清淡"
-                        except:
-                            pass
-                    
-                    print(f"   [Akshare] ✅ 成功获取换手率: {turnover_rate}%")
-                    return {
-                        "current_turnover_rate": turnover_rate,
-                        "interpretation": interpretation
-                    }
-        except Exception as e:
-            print(f"   [Akshare] ❌ 获取换手率失败: {e}")
+            base_path = "/home/samsun/桌面"
+            now = datetime.now()
             
-            # akshare失败，尝试tushare
-            if data_source_manager.tushare_available:
-                try:
-                    print(f"   [Tushare] 正在获取换手率数据（备用数据源）...")
-                    ts_code = data_source_manager._convert_to_ts_code(symbol)
+            # 周末回溯逻辑
+            if now.weekday() == 5: target_date = now - timedelta(days=1)
+            elif now.weekday() == 6: target_date = now - timedelta(days=2)
+            else: target_date = now
+                
+            date_str = target_date.strftime("%Y%m%d")
+            file_path = os.path.join(base_path, f"全部Ａ股{date_str}.xls")
+
+            if os.path.exists(file_path):
+                # 1. 读取文件，注意处理 GBK 编码和制表符
+                # 增加 skipinitialspace=True 处理列名前后的空格
+                df_local = pd.read_csv(file_path, sep='\t', encoding='gbk', on_bad_lines='skip', skipinitialspace=True)
+                
+                # 2. 【核心修复】强制清洗所有列名的空格
+                df_local.columns = [str(c).strip() for c in df_local.columns]
+                
+                # 3. 检查清洗后的列名
+                if '代码' in df_local.columns:
+                    # 4. 清洗数据行中的代码列（去除 =" 和 "）
+                    df_local['clean_code'] = df_local['代码'].astype(str).apply(lambda x: re.sub(r'[="]', '', x).strip())
                     
-                    # 获取最近一个交易日的数据
-                    df = data_source_manager.tushare_api.daily_basic(
-                        ts_code=ts_code,
-                        trade_date=datetime.now().strftime('%Y%m%d')
-                    )
+                    # 5. 统一搜索的 symbol 格式（只留数字）
+                    search_symbol = re.sub(r'[^0-9]', '', str(symbol))
                     
-                    if df is not None and not df.empty:
-                        row = df.iloc[0]
-                        turnover_rate = row.get('turnover_rate', None)
+                    # 6. 执行匹配
+                    match = df_local[df_local['clean_code'] == search_symbol]
+                    
+                    if not match.empty:
+                        # 样本中显示列名是 '换手%'
+                        turnover_rate = match.iloc[0].get('换手%', None)
+                        source_name = "本地文件"
                         
-                        # 解读换手率
-                        interpretation = ""
-                        if turnover_rate != None:
-                            try:
-                                turnover = float(turnover_rate)
-                                if turnover > 20:
-                                    interpretation = "换手率极高（>20%），资金活跃度极高，可能存在炒作"
-                                elif turnover > 10:
-                                    interpretation = "换手率较高（>10%），交易活跃"
-                                elif turnover > 5:
-                                    interpretation = "换手率正常（5%-10%），交易适中"
-                                elif turnover > 2:
-                                    interpretation = "换手率偏低（2%-5%），交易相对清淡"
-                                else:
-                                    interpretation = "换手率很低（<2%），交易清淡"
-                            except:
-                                pass
+                        # 如果读到的是带有空格的字符串，转为 float
+                        if isinstance(turnover_rate, str):
+                            turnover_rate = turnover_rate.strip()
                         
-                        print(f"   [Tushare] ✅ 成功获取换手率: {turnover_rate}%")
-                        return {
-                            "current_turnover_rate": turnover_rate,
-                            "interpretation": interpretation
-                        }
-                except Exception as te:
-                    print(f"   [Tushare] ❌ 获取失败: {te}")
-        
+                        print(f"   [Local] ✅ 成功匹配 {symbol}，换手率: {turnover_rate}%")
+                else:
+                    print(f"   [Local] ⚠️ 清洗后的列名中仍未找到'代码'。当前列名: {list(df_local.columns)[:5]}")
+
+        except Exception as e:
+            print(f"   [Local] ⚠️ 读取失败: {e}")
+        # --- 2. Akshare 兜底 ---
+        if turnover_rate is None:
+            try:
+                print(f"   [Akshare] 正在获取实时数据...")
+                df = ak.stock_zh_a_spot_em()
+                if df is not None and not df.empty:
+                    # Akshare 的 symbol 通常不带后缀
+                    clean_symbol = re.sub(r'[^0-9]', '', symbol)
+                    stock_data = df[df['代码'] == clean_symbol]
+                    if not stock_data.empty:
+                        turnover_rate = stock_data.iloc[0].get('换手率', None)
+                        source_name = "Akshare"
+                        print(f"   [Akshare] ✅ 获取成功: {turnover_rate}%")
+            except Exception as e:
+                print(f"   [Akshare] ❌ 失败: {e}")
+
+        # --- 3. Tushare 最终尝试 ---
+        if turnover_rate is None and data_source_manager.tushare_available:
+            print(f"   [Tushare] 正在获取换手率数据（备用数据源）...")
+            ts_code = data_source_manager._convert_to_ts_code(symbol)
+            
+            # 获取最近一个交易日的数据
+            df = data_source_manager.tushare_api.daily_basic(
+                ts_code=ts_code,
+                trade_date=datetime.now().strftime('%Y%m%d')
+            )
+                        
+
+        # --- 4. 统一解读与返回 ---
+        if turnover_rate is not None:
+            try:
+                val = float(turnover_rate)
+                if val > 20: interpretation = "换手率极高（>20%），资金活跃度极高"
+                elif val > 10: interpretation = "换手率较高（>10%），交易活跃"
+                elif val > 5: interpretation = "换手率正常（5%-10%），交易适中"
+                elif val > 2: interpretation = "换手率偏低（2%-5%），交易清淡"
+                else: interpretation = "换手率很低（<2%），交易清淡"
+                
+                return {
+                    "current_turnover_rate": val,
+                    "interpretation": interpretation,
+                    "source": source_name
+                }
+            except:
+                return {"current_turnover_rate": turnover_rate, "interpretation": "数据格式异常", "source": source_name}
         return None
     
     def _get_market_index_sentiment(self):
@@ -749,17 +768,16 @@ if __name__ == "__main__":
     
     # 测试平安银行
     symbol = "000001"
-    print(f"\n正在获取 {symbol} 的市场情绪数据...")
+    # print(f"\n正在获取 {symbol} 的市场情绪数据...")
     
-    sentiment_data = fetcher.get_market_sentiment_data(symbol)
+    sentiment_data = fetcher._get_turnover_rate(symbol)
     
-    if sentiment_data.get("data_success"):
-        print("\n" + "="*60)
-        print("市场情绪数据获取成功！")
-        print("="*60)
+    # if sentiment_data.get("data_success"):
+    #     print("市场情绪数据获取成功！")
+    #     print("="*60)
         
-        formatted_text = fetcher.format_sentiment_data_for_ai(sentiment_data)
-        print(formatted_text)
-    else:
-        print(f"\n获取失败: {sentiment_data.get('error', '未知错误')}")
+    #     formatted_text = fetcher.format_sentiment_data_for_ai(sentiment_data)
+    #     print(formatted_text)
+    # else:
+    #     print(f"\n获取失败: {sentiment_data.get('error', '未知错误')}")
 
