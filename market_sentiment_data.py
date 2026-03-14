@@ -13,6 +13,7 @@ import io
 import os
 import re
 from data_source_manager import data_source_manager
+from pathlib import Path
 
 warnings.filterwarnings('ignore')
 
@@ -40,7 +41,72 @@ class MarketSentimentDataFetcher:
     
     def __init__(self):
         self.arbr_period = 26  # ARBR计算周期
+        # 定义缓存目录
+        self.cache_dir = Path("/tmp/stock_sentiment_cache")
+        self.cache_dir.mkdir(exist_ok=True)
     
+    def _get_cache_filename(self, prefix):
+        """生成基于时间戳的文件名"""
+        now = datetime.now()
+        weekday = now.weekday()  # 0是周一, 4是周五
+        hour = now.hour
+        minute = now.minute
+
+        # 判定是否为非交易时段（周五15:00后 到 周一09:30前）
+        is_weekend = False
+        if weekday == 4 and (hour > 15 or (hour == 15 and minute > 0)):
+            is_weekend = True
+        elif weekday in [5, 6]: # 周六周日
+            is_weekend = True
+        elif weekday == 0 and (hour < 9 or (hour == 9 and minute < 30)):
+            is_weekend = True
+
+        if is_weekend:
+            # 非交易时间统一使用一个固定后缀
+            time_suffix = "weekend_closed"
+        else:
+            # 交易时间：每15分钟一个快照 (0, 15, 30, 45)
+            quarter = (minute // 15) * 15
+            time_suffix = now.strftime(f"%Y%m%d_%H{quarter:02d}")
+
+        return self.cache_dir / f"{prefix}_{time_suffix}.feather"
+    
+    def _get_data_with_cache(self, cache_prefix, fetch_func):
+        """通用缓存读取逻辑"""
+        cache_file = self._get_cache_filename(cache_prefix)
+        
+        # 1. 尝试读取缓存
+        if cache_file.exists():
+            try:
+                # print(f"🚀 [Cache] 命中本地缓存: {cache_file.name}")国
+                return pd.read_feather(cache_file).to_dict(orient='records')[0]
+            except Exception as e:
+                print(f"⚠️ 缓存读取失败: {e}")
+
+        # 2. 缓存不存在或读取失败，执行抓取
+        data = fetch_func()
+        
+        # 3. 序列化存储
+        if data:
+            try:
+                # 将字典转为单行DataFrame存入
+                pd.DataFrame([data]).to_feather(cache_file)
+                # 清理旧缓存（可选：删除1小时前的文件避免/tmp过大）
+                # self._cleanup_old_caches()
+            except Exception as e:
+                print(f"⚠️ 写入缓存失败: {e}")
+        
+        return data
+
+    def _cleanup_old_caches(self):
+        """清理超过 2 小时的旧缓存文件"""
+        try:
+            for f in self.cache_dir.glob("*.feather"):
+                if (datetime.now() - datetime.fromtimestamp(f.stat().st_mtime)) > timedelta(hours=2):
+                    f.unlink()
+        except:
+            pass
+
     def get_market_sentiment_data(self, symbol, stock_data=None):
         """
         获取完整的市场情绪分析数据
@@ -433,139 +499,161 @@ class MarketSentimentDataFetcher:
         return None
     
     def _get_market_index_sentiment(self):
-        """获取大盘指数情绪（支持akshare和tushare自动切换）"""
-        try:
-            # 优先使用akshare获取上证指数实时数据
-            print(f"   [Akshare] 正在获取大盘指数数据...")
-            # 使用正确的symbol参数
-            df = ak.stock_zh_index_spot_em(symbol="上证系列指数")
-            if df is not None and not df.empty:
-                # 查找上证指数（代码为000001）
-                sh_index = df[df['代码'] == '000001']
-                if not sh_index.empty:
-                    row = sh_index.iloc[0]
-                    change_pct = row.get('涨跌幅', 0)
-                    
-                    # 获取涨跌家数
-                    try:
-                        market_summary = ak.stock_zh_a_spot_em()
-                        if market_summary is not None and not market_summary.empty:
-                            up_count = len(market_summary[market_summary['涨跌幅'] > 0])
-                            down_count = len(market_summary[market_summary['涨跌幅'] < 0])
-                            total_count = len(market_summary)
-                            flat_count = total_count - up_count - down_count
-                            
-                            # 计算市场情绪指数
-                            sentiment_score = (up_count - down_count) / total_count * 100
-                            
-                            # 解读市场情绪
-                            if sentiment_score > 30:
-                                sentiment = "市场情绪极度乐观"
-                            elif sentiment_score > 10:
-                                sentiment = "市场情绪偏多"
-                            elif sentiment_score > -10:
-                                sentiment = "市场情绪中性"
-                            elif sentiment_score > -30:
-                                sentiment = "市场情绪偏空"
-                            else:
-                                sentiment = "市场情绪极度悲观"
-                            
-                            print(f"   [Akshare] ✅ 成功获取大盘数据")
-                            return {
-                                "index_name": "上证指数",
-                                "change_percent": change_pct,
-                                "up_count": up_count,
-                                "down_count": down_count,
-                                "flat_count": flat_count,
-                                "total_count": total_count,
-                                "sentiment_score": f"{sentiment_score:.2f}",
-                                "sentiment_interpretation": sentiment
-                            }
-                    except Exception as e:
-                        print(f"   [Akshare] 获取涨跌家数失败: {e}")
-                    
-                    print(f"   [Akshare] ✅ 成功获取指数涨跌幅")
-                    return {
-                        "index_name": "上证指数",
-                        "change_percent": change_pct
-                    }
-        except Exception as e:
-            print(f"   [Akshare] ❌ 获取大盘指数失败: {e}")
-            
-            # akshare失败，尝试tushare
-            if data_source_manager.tushare_available:
-                try:
-                    print(f"   [Tushare] 正在获取大盘指数数据（备用数据源）...")
-                    
-                    # 获取上证指数数据
-                    df = data_source_manager.tushare_api.index_daily(
-                        ts_code='000001.SH',
-                        start_date=datetime.now().strftime('%Y%m%d'),
-                        end_date=datetime.now().strftime('%Y%m%d')
-                    )
-                    
-                    if df is not None and not df.empty:
-                        row = df.iloc[0]
-                        change_pct = row.get('pct_chg', 0)
+
+        """升级版：带缓存的大盘情绪获取"""
+        def _fetch():
+            # 这里放入你原有的 ak.stock_zh_index_spot_em 等逻辑
+            # ... (保持原代码抓取逻辑不变)
+            print("🌐 [Network] 正在从网络抓取大盘情绪数据...")
+            try:
+                # 优先使用akshare获取上证指数实时数据
+                print(f"   [Akshare] 正在获取大盘指数数据...")
+                # 使用正确的symbol参数
+                df = ak.stock_zh_index_spot_em(symbol="上证系列指数")
+                if df is not None and not df.empty:
+                    # 查找上证指数（代码为000001）
+                    sh_index = df[df['代码'] == '000001']
+                    if not sh_index.empty:
+                        row = sh_index.iloc[0]
+                        change_pct = row.get('涨跌幅', 0)
                         
-                        print(f"   [Tushare] ✅ 成功获取大盘指数涨跌幅: {change_pct}%")
+                        # 获取涨跌家数
+                        try:
+                            market_summary = ak.stock_zh_a_spot_em()
+                            if market_summary is not None and not market_summary.empty:
+                                up_count = len(market_summary[market_summary['涨跌幅'] > 0])
+                                down_count = len(market_summary[market_summary['涨跌幅'] < 0])
+                                total_count = len(market_summary)
+                                flat_count = total_count - up_count - down_count
+                                
+                                # 计算市场情绪指数
+                                sentiment_score = (up_count - down_count) / total_count * 100
+                                
+                                # 解读市场情绪
+                                if sentiment_score > 30:
+                                    sentiment = "市场情绪极度乐观"
+                                elif sentiment_score > 10:
+                                    sentiment = "市场情绪偏多"
+                                elif sentiment_score > -10:
+                                    sentiment = "市场情绪中性"
+                                elif sentiment_score > -30:
+                                    sentiment = "市场情绪偏空"
+                                else:
+                                    sentiment = "市场情绪极度悲观"
+                                
+                                print(f"   [Akshare] ✅ 成功获取大盘数据")
+                                return {
+                                    "index_name": "上证指数",
+                                    "change_percent": change_pct,
+                                    "up_count": up_count,
+                                    "down_count": down_count,
+                                    "flat_count": flat_count,
+                                    "total_count": total_count,
+                                    "sentiment_score": f"{sentiment_score:.2f}",
+                                    "sentiment_interpretation": sentiment
+                                }
+                        except Exception as e:
+                            print(f"   [Akshare] 获取涨跌家数失败: {e}")
+                        
+                        print(f"   [Akshare] ✅ 成功获取指数涨跌幅")
                         return {
                             "index_name": "上证指数",
                             "change_percent": change_pct
                         }
-                except Exception as te:
-                    print(f"   [Tushare] ❌ 获取失败: {te}")
-        
-        return None
+            except Exception as e:
+                print(f"   [Akshare] ❌ 获取大盘指数失败: {e}")
+                
+                # akshare失败，尝试tushare
+                if data_source_manager.tushare_available:
+                    try:
+                        print(f"   [Tushare] 正在获取大盘指数数据（备用数据源）...")
+                        
+                        # 获取上证指数数据
+                        df = data_source_manager.tushare_api.index_daily(
+                            ts_code='000001.SH',
+                            start_date=datetime.now().strftime('%Y%m%d'),
+                            end_date=datetime.now().strftime('%Y%m%d')
+                        )
+                        
+                        if df is not None and not df.empty:
+                            row = df.iloc[0]
+                            change_pct = row.get('pct_chg', 0)
+                            
+                            print(f"   [Tushare] ✅ 成功获取大盘指数涨跌幅: {change_pct}%")
+                            return {
+                                "index_name": "上证指数",
+                                "change_percent": change_pct
+                            }
+                    except Exception as te:
+                        print(f"   [Tushare] ❌ 获取失败: {te}")
+            
+            return None
+            
+            # 示例返回结构
+            return {"index_name": "上证指数", "change_percent": 0.5, "sentiment_score": 60} 
+
+        return self._get_data_with_cache("market_index", _fetch)
+
+
+        """获取大盘指数情绪（支持akshare和tushare自动切换）"""
+
     
     def _get_limit_up_down_stats(self):
-        """获取涨跌停统计数据"""
-        try:
-            # 获取今日涨停和跌停统计
-            today = datetime.now().strftime('%Y%m%d')
-            
-            # 获取涨停股票
+        """升级版：带缓存的涨跌停统计"""
+        def _fetch():
             try:
-                limit_up_df = ak.stock_zt_pool_em(date=today)
-                limit_up_count = len(limit_up_df) if limit_up_df is not None and not limit_up_df.empty else 0
-            except:
-                limit_up_count = 0
-            
-            # 获取跌停股票
-            try:
-                limit_down_df = ak.stock_zt_pool_dtgc_em(date=today)
-                limit_down_count = len(limit_down_df) if limit_down_df is not None and not limit_down_df.empty else 0
-            except:
-                limit_down_count = 0
-            
-            # 计算涨跌停比例
-            if limit_up_count + limit_down_count > 0:
-                limit_ratio = limit_up_count / (limit_up_count + limit_down_count) * 100
-            else:
-                limit_ratio = 50
-            
-            # 解读涨跌停情况
-            if limit_ratio > 70:
-                interpretation = "涨停股远多于跌停股，市场情绪火热"
-            elif limit_ratio > 60:
-                interpretation = "涨停股多于跌停股，市场情绪较好"
-            elif limit_ratio > 40:
-                interpretation = "涨跌停数量相当，市场情绪分化"
-            elif limit_ratio > 30:
-                interpretation = "跌停股多于涨停股，市场情绪较弱"
-            else:
-                interpretation = "跌停股远多于涨停股，市场情绪低迷"
-            
-            return {
-                "limit_up_count": limit_up_count,
-                "limit_down_count": limit_down_count,
-                "limit_ratio": f"{limit_ratio:.1f}%",
-                "interpretation": interpretation,
-                "date": today
-            }
-        except Exception as e:
-            print(f"获取涨跌停数据失败: {e}")
-        return None
+                # 获取今日涨停和跌停统计
+                today = datetime.now().strftime('%Y%m%d')
+                
+                # 获取涨停股票
+                try:
+                    limit_up_df = ak.stock_zt_pool_em(date=today)
+                    limit_up_count = len(limit_up_df) if limit_up_df is not None and not limit_up_df.empty else 0
+                except:
+                    limit_up_count = 0
+                
+                # 获取跌停股票
+                try:
+                    limit_down_df = ak.stock_zt_pool_dtgc_em(date=today)
+                    limit_down_count = len(limit_down_df) if limit_down_df is not None and not limit_down_df.empty else 0
+                except:
+                    limit_down_count = 0
+                
+                # 计算涨跌停比例
+                if limit_up_count + limit_down_count > 0:
+                    limit_ratio = limit_up_count / (limit_up_count + limit_down_count) * 100
+                else:
+                    limit_ratio = 50
+                
+                # 解读涨跌停情况
+                if limit_ratio > 70:
+                    interpretation = "涨停股远多于跌停股，市场情绪火热"
+                elif limit_ratio > 60:
+                    interpretation = "涨停股多于跌停股，市场情绪较好"
+                elif limit_ratio > 40:
+                    interpretation = "涨跌停数量相当，市场情绪分化"
+                elif limit_ratio > 30:
+                    interpretation = "跌停股多于涨停股，市场情绪较弱"
+                else:
+                    interpretation = "跌停股远多于涨停股，市场情绪低迷"
+                
+                return {
+                    "limit_up_count": limit_up_count,
+                    "limit_down_count": limit_down_count,
+                    "limit_ratio": f"{limit_ratio:.1f}%",
+                    "interpretation": interpretation,
+                    "date": today
+                }
+            except Exception as e:
+                print(f"获取涨跌停数据失败: {e}")
+            return None
+            # ... (保持原代码抓取逻辑不变)
+            print("🌐 [Network] 正在从网络抓取涨跌停数据...")
+
+            return {"limit_up_count": 50, "limit_down_count": 5, "limit_ratio": "90%"}
+
+        return self._get_data_with_cache("limit_stats", _fetch)
+        
     
     def _get_margin_trading_data(self, symbol):
         """获取融资融券数据"""
@@ -620,60 +708,67 @@ class MarketSentimentDataFetcher:
         return None
     
     def _get_fear_greed_index(self):
-        """计算市场恐慌贪婪指数（基于多个指标综合计算）"""
-        try:
-            # 基于多个市场指标计算恐慌贪婪指数
-            # 1. 涨跌家数比例
-            # 2. 涨跌停比例
-            # 3. 成交量变化
-            
-            score = 50  # 基准分数
-            factors = []
-            
-            # 获取涨跌家数
+        """升级版：恐慌贪婪指数"""
+        def fetch_logic():
+            # 这里的计算通常涉及全市场 scan，耗时较长
             try:
-                market_summary = ak.stock_zh_a_spot_em()
-                if market_summary is not None and not market_summary.empty:
-                    up_count = len(market_summary[market_summary['涨跌幅'] > 0])
-                    down_count = len(market_summary[market_summary['涨跌幅'] < 0])
-                    total = len(market_summary)
-                    
-                    up_ratio = up_count / total
-                    # 根据涨跌家数比例调整分数（权重30%）
-                    score += (up_ratio - 0.5) * 60
-                    factors.append(f"涨跌家数比例: {up_ratio:.1%}")
-            except:
-                pass
-            
-            # 确保分数在0-100之间
-            score = max(0, min(100, score))
-            
-            # 解读恐慌贪婪指数
-            if score >= 75:
-                level = "极度贪婪"
-                interpretation = "市场情绪极度乐观，投资者贪婪，需警惕回调风险"
-            elif score >= 60:
-                level = "贪婪"
-                interpretation = "市场情绪乐观，投资者偏向贪婪"
-            elif score >= 40:
-                level = "中性"
-                interpretation = "市场情绪中性，投资者相对理性"
-            elif score >= 25:
-                level = "恐慌"
-                interpretation = "市场情绪悲观，投资者偏向恐慌"
-            else:
-                level = "极度恐慌"
-                interpretation = "市场情绪极度悲观，投资者恐慌，可能存在超卖机会"
-            
-            return {
-                "score": f"{score:.1f}",
-                "level": level,
-                "interpretation": interpretation,
-                "factors": factors
-            }
-        except Exception as e:
-            print(f"计算恐慌贪婪指数失败: {e}")
-        return None
+                # 基于多个市场指标计算恐慌贪婪指数
+                # 1. 涨跌家数比例
+                # 2. 涨跌停比例
+                # 3. 成交量变化
+                
+                score = 50  # 基准分数
+                factors = []
+                
+                # 获取涨跌家数
+                try:
+                    market_summary = ak.stock_zh_a_spot_em()
+                    if market_summary is not None and not market_summary.empty:
+                        up_count = len(market_summary[market_summary['涨跌幅'] > 0])
+                        down_count = len(market_summary[market_summary['涨跌幅'] < 0])
+                        total = len(market_summary)
+                        
+                        up_ratio = up_count / total
+                        # 根据涨跌家数比例调整分数（权重30%）
+                        score += (up_ratio - 0.5) * 60
+                        factors.append(f"涨跌家数比例: {up_ratio:.1%}")
+                except:
+                    pass
+                
+                # 确保分数在0-100之间
+                score = max(0, min(100, score))
+                
+                # 解读恐慌贪婪指数
+                if score >= 75:
+                    level = "极度贪婪"
+                    interpretation = "市场情绪极度乐观，投资者贪婪，需警惕回调风险"
+                elif score >= 60:
+                    level = "贪婪"
+                    interpretation = "市场情绪乐观，投资者偏向贪婪"
+                elif score >= 40:
+                    level = "中性"
+                    interpretation = "市场情绪中性，投资者相对理性"
+                elif score >= 25:
+                    level = "恐慌"
+                    interpretation = "市场情绪悲观，投资者偏向恐慌"
+                else:
+                    level = "极度恐慌"
+                    interpretation = "市场情绪极度悲观，投资者恐慌，可能存在超卖机会"
+                
+                return {
+                    "score": f"{score:.1f}",
+                    "level": level,
+                    "interpretation": interpretation,
+                    "factors": factors
+                }
+            except Exception as e:
+                print(f"计算恐慌贪婪指数失败: {e}")
+            return None
+            print("🌐 [Network] 正在重新计算全市场恐慌贪婪指数...")
+            return {"score": "65.5", "level": "贪婪", "interpretation": "市场情绪乐观"}
+
+        return self._get_data_with_cache("fear_greed", fetch_logic)
+       
     
     def format_sentiment_data_for_ai(self, sentiment_data):
         """
@@ -770,16 +865,16 @@ if __name__ == "__main__":
     
     # 测试平安银行
     symbol = "000001"
-    # print(f"\n正在获取 {symbol} 的市场情绪数据...")
+    print(f"\n正在获取 {symbol} 的市场情绪数据...")
     
-    sentiment_data = fetcher._get_turnover_rate(symbol)
+    sentiment_data = fetcher.get_market_sentiment_data(symbol)
     
-    # if sentiment_data.get("data_success"):
-    #     print("市场情绪数据获取成功！")
-    #     print("="*60)
+    if sentiment_data.get("data_success"):
+        print("市场情绪数据获取成功！")
+        print("="*60)
         
-    #     formatted_text = fetcher.format_sentiment_data_for_ai(sentiment_data)
-    #     print(formatted_text)
-    # else:
-    #     print(f"\n获取失败: {sentiment_data.get('error', '未知错误')}")
+        formatted_text = fetcher.format_sentiment_data_for_ai(sentiment_data)
+        print(formatted_text)
+    else:
+        print(f"\n获取失败: {sentiment_data.get('error', '未知错误')}")
 

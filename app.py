@@ -64,22 +64,131 @@ def render_custom_detail_page(record):
             st.rerun()
 
     with col_right:
-        # 对应你数据库中的各个 Agent 结果
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 技术分析", "🏢 基本面分析", "💰 资金面分析", "⚠️ 风险管理", "🎙 决策会议纪要"])
+        # 增加一个 "核心结论" 标签页作为默认展示
+        tabs = st.tabs(["📝 核心结论", "📈 技术分析", "🏢 基本面分析", "💰 资金面分析", "⚠️ 风险管理", "🎙 会议纪要"])
         
-        with tab1:
-            # 提取技术分析师的 analysis 内容
+        with tabs[0]:
+            st.markdown("### 🤖 AI 综合投资建议")
+            
+            # 1. 风险警示 (使用 warning)
+            risk_msg = final.get('risk_warning', '暂无风险提示')
+            st.warning(f"⚠️ **风险警示：** {risk_msg}")
+            
+            # 2. 核心价格区间 (两列布局)
+            c1, c2 = st.columns(2)
+            with c1:
+                st.info(f"**建仓区间**\n\n{final.get('entry_range', 'N/A')}")
+            with c2:
+                st.success(f"**止盈目标**\n\n{final.get('take_profit', 'N/A')}")
+                
+            st.divider()
+            
+            # 3. 详细操作策略
+            st.markdown(f"#### 💡 操作策略")
+            st.write(final.get('operation_advice', '无具体建议'))
+            
+            # 4. 决策置信度 (修复报错部分)
+            st.markdown("---")
+            # 使用列布局让置信度显示更紧凑
+            col_conf1, col_conf2 = st.columns([1, 4])
+            
+            conf_val = final.get('confidence_level', '0')
+            try:
+                conf_score = int(conf_val)
+            except:
+                conf_score = 0
+
+            with col_conf1:
+                st.write(f"**置信度: {conf_score}/10**")
+            with col_conf2:
+                st.progress(conf_score / 10.0)
+                
+            # 根据分值给出状态标签
+            if conf_score >= 8:
+                st.success("✅ 信号极强，建议重点关注")
+            elif conf_score >= 5:
+                st.info("ℹ️ 信号中等，请结合大盘环境判断")
+            else:
+                st.error("❌ 信号较弱，注意数据滞后风险")
+            
+        # 后续标签页保持原样
+        with tabs[1]:
             st.markdown(agents.get('technical', {}).get('analysis', "无数据"))
-        with tab2:
+        with tabs[2]:
             st.markdown(agents.get('fundamental', {}).get('analysis', "无数据"))
-        with tab3:
+        with tabs[3]:
             st.markdown(agents.get('fund_flow', {}).get('analysis', "无数据"))
-        with tab4:
+        with tabs[4]:
             st.markdown(agents.get('risk_management', {}).get('analysis', "无数据"))
-        with tab5:
-            # 决策会议记录通常存放在 discussion_result 里
+        with tabs[5]:
             st.markdown(record.get('discussion_result', "无会议记录"))
-# 页面配置
+            # 对应你数据库中的各个 Agent 结果
+            tabs = st.tabs(["📝 核心结论", "📈 技术分析", "🏢 基本面分析", "💰 资金面分析", "⚠️ 风险管理", "🎙 会议纪要"])
+            
+            with tabs[0]:
+                st.markdown("### 🤖 AI 综合投资建议")
+                
+                # 使用 st.info 或 st.warning 根据风险等级变色
+                risk_msg = final.get('risk_warning', '暂无风险提示')
+                st.warning(f"**风险警示：** {risk_msg}")
+                
+                # 用两列布局展示核心区间
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.info(f"**建仓区间：**\n{final.get('entry_range', 'N/A')}")
+                with c2:
+                    st.success(f"**止盈目标：**\n{final.get('take_profit', 'N/A')}")
+                    
+                # 详细的操作建议
+                st.markdown("---")
+                st.markdown(f"#### 💡 操作策略")
+                st.write(final.get('operation_advice', '无具体建议'))
+                
+                # 置信度进度条 (假设 10 为满分，代码中为 "6")
+                conf_score = int(final.get('confidence_level', 0))
+                # --- 替换报错的 st.elements.utils._gauge ---
+                st.markdown("---")
+                
+                # 提取置信度，处理可能存在的字符串/数字格式问题
+                conf_val = final.get('confidence_level', '0')
+                try:
+                    conf_score = int(conf_val)
+                except (ValueError, TypeError):
+                    conf_score = 0
+
+                # 用两列布局：左边文字，右边进度条
+                c_left, c_right = st.columns([1, 3])
+                with c_left:
+                    st.write(f"**🎯 决策置信度**")
+                    st.subheader(f"{conf_score}/10")
+                with c_right:
+                    st.write("") # 占位对齐
+                    # 进度条颜色会根据数值自动从红到绿变化 (Streamlit 默认行为)
+                    st.progress(conf_score / 10.0)
+                    
+                    # 增加动态状态标签
+                    if conf_score >= 8:
+                        st.caption("🟢 **信号极强：** 专家共识度高，建议重点关注。")
+                    elif conf_score >= 5:
+                        st.caption("🟡 **信号中等：** 存在分歧，建议轻仓或观察。")
+                    else:
+                        st.caption("🔴 **信号较弱：** 数据不足或分歧过大，仅供参考。")
+                    
+            with tabs[1]:
+                st.markdown(agents.get('technical', {}).get('analysis', "无数据"))
+                
+            with tabs[2]:
+                st.markdown(agents.get('fundamental', {}).get('analysis', "无数据"))
+                
+            with tabs[3]:
+                st.markdown(agents.get('fund_flow', {}).get('analysis', "无数据"))
+                
+            with tabs[4]:
+                st.markdown(agents.get('risk_management', {}).get('analysis', "无数据"))
+                
+            with tabs[5]:
+                st.markdown(record.get('discussion_result', "无会议记录"))
+    # 页面配置
 st.set_page_config(
     page_title="复合多AI智能体股票团队分析系统",
     page_icon="📈",
@@ -1923,6 +2032,7 @@ def display_history_records():
                 # 这里的按钮会自动垂直居中对齐
                 if st.button("➕ 加入监测", key=f"add_monitor_{record['id']}", use_container_width=True):
                     st.session_state.add_to_monitor_id = record['id']
+                    st.session_state.viewing_record_id = record['id']
                     st.success(f"已加入监测列表")
 
             # --- 下方功能小行 ---
