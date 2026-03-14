@@ -78,7 +78,7 @@ class MarketSentimentDataFetcher:
         # 1. 尝试读取缓存
         if cache_file.exists():
             try:
-                # print(f"🚀 [Cache] 命中本地缓存: {cache_file.name}")国
+                print(f"🚀 [Cache] 命中本地缓存: {cache_file.name}")
                 return pd.read_feather(cache_file).to_dict(orient='records')[0]
             except Exception as e:
                 print(f"⚠️ 缓存读取失败: {e}")

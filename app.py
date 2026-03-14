@@ -2031,6 +2031,7 @@ def display_history_records():
             with col4:
                 # 这里的按钮会自动垂直居中对齐
                 if st.button("➕ 加入监测", key=f"add_monitor_{record['id']}", use_container_width=True):
+                    print(f"DEBUG: Button '加入监测' clicked for record ID: {record['id']}")
                     st.session_state.add_to_monitor_id = record['id']
                     st.session_state.viewing_record_id = record['id']
                     st.success(f"已加入监测列表")
@@ -2051,182 +2052,132 @@ def display_history_records():
         display_record_detail(st.session_state.viewing_record_id)
 
 
+import time
+import re
+import streamlit as st
 
+@st.dialog("➕ 加入股票监测")
 def display_add_to_monitor_dialog(record):
-    """显示加入监测的对话框"""
-    st.markdown("---")
-    st.subheader("➕ 加入监测")
+    """
+    优化后的对话框逻辑：
+    1. 采用扁平化设计，移除 st.form 规避嵌套报错。
+    2. 增强正则提取的健壮性。
+    3. 优化交互反馈。
+    """
+    print(f"DEBUG: Entering display_add_to_monitor_dialog for {record.get('symbol')}")
+    
+    # --- 1. 安全检查 ---
+    final_decision = record.get('final_decision', {})
+    if not isinstance(final_decision, dict):
+        st.error("⚠️ 无法从分析结果中提取决策数据，建议重新生成分析。")
+        return
 
-    final_decision = record['final_decision']
+    # --- 2. 健壮的数据解析 ---
+    # 定义通用的数字提取函数
+    def get_nums(text):
+        return [float(n) for n in re.findall(r'\d+\.?\d*', str(text))] if text else []
 
-    # 从final_decision中提取关键数据
-    if isinstance(final_decision, dict):
-        # 解析进场区间
-        entry_range_str = final_decision.get('entry_range', None)
-        entry_min = 0.0
-        entry_max = 0.0
+    # 解析进场区间
+    entry_raw = final_decision.get('entry_range', "")
+    e_nums = get_nums(entry_raw)
+    # 策略：如果有两个数取区间；如果只有一个数（如"44.5以下"）则max为该数；全无则0
+    entry_min = e_nums[0] if len(e_nums) >= 2 else 0.0
+    entry_max = e_nums[1] if len(e_nums) >= 2 else (e_nums[0] if len(e_nums) == 1 else 0.0)
 
-        # 尝试解析进场区间字符串，支持多种格式
-        if entry_range_str and entry_range_str != None:
-            try:
-                import re
-                # 移除常见的前缀和单位
-                clean_str = str(entry_range_str).replace('¥', '').replace('元', '').replace('$', '')
-                # 使用正则表达式提取数字
-                # 支持格式：10.5-12.0, 10.5 - 12.0, 10.5~12.0, 10.5至12.0 等
-                numbers = re.findall(r'\d+\.?\d*', clean_str)
-                if len(numbers) >= 2:
-                    entry_min = float(numbers[0])
-                    entry_max = float(numbers[1])
-            except:
-                # 如果解析失败，尝试用分隔符split
-                try:
-                    clean_str = str(entry_range_str).replace('¥', '').replace('元', '').replace('$', '')
-                    # 尝试多种分隔符
-                    for sep in ['-', '~', '至', '到']:
-                        if sep in clean_str:
-                            parts = clean_str.split(sep)
-                            if len(parts) == 2:
-                                entry_min = float(parts[0].strip())
-                                entry_max = float(parts[1].strip())
-                                break
-                except:
-                    pass
+    # 解析止盈止损
+    tp_nums = get_nums(final_decision.get('take_profit'))
+    sl_nums = get_nums(final_decision.get('stop_loss'))
+    take_profit = tp_nums[0] if tp_nums else 0.0
+    stop_loss = sl_nums[0] if sl_nums else 0.0
 
-        # 提取止盈和止损
-        take_profit_str = final_decision.get('take_profit', None)
-        stop_loss_str = final_decision.get('stop_loss', None)
+    print(f"DEBUG: Parsed Values -> Entry: {entry_min}-{entry_max}, TP: {take_profit}, SL: {stop_loss}")
 
-        take_profit = 0.0
-        stop_loss = 0.0
-
-        # 解析止盈位
-        if take_profit_str and take_profit_str != None:
-            try:
-                import re
-                # 移除单位和符号
-                clean_str = str(take_profit_str).replace('¥', '').replace('元', '').replace('$', '').strip()
-                # 提取第一个数字
-                numbers = re.findall(r'\d+\.?\d*', clean_str)
-                if numbers:
-                    take_profit = float(numbers[0])
-            except:
-                pass
-
-        # 解析止损位
-        if stop_loss_str and stop_loss_str != None:
-            try:
-                import re
-                # 移除单位和符号
-                clean_str = str(stop_loss_str).replace('¥', '').replace('元', '').replace('$', '').strip()
-                # 提取第一个数字
-                numbers = re.findall(r'\d+\.?\d*', clean_str)
-                if numbers:
-                    stop_loss = float(numbers[0])
-            except:
-                pass
-
-        # 获取评级
-        rating = final_decision.get('rating', '买入')
-
-        # 检查是否已经在监测列表中
-        from monitor_db import monitor_db
+    # --- 3. 重复检查 ---
+    from monitor_db import monitor_db
+    try:
         existing_stocks = monitor_db.get_monitored_stocks()
-        is_duplicate = any(stock['symbol'] == record['symbol'] for stock in existing_stocks)
-
+        is_duplicate = any(s['symbol'] == record['symbol'] for s in existing_stocks)
         if is_duplicate:
-            st.warning(f"⚠️ {record['symbol']} 已经在监测列表中。继续添加将创建重复监测项。")
+            st.warning(f"⚠️ {record['symbol']} 已经在监测列表中。再次添加将创建重复记录。")
+    except Exception as e:
+        print(f"DEBUG: Check duplicate failed: {e}")
 
-        st.info(f"""
-        **从分析结果中提取的数据：**
-        - 进场区间: {entry_min} - {entry_max}
-        - 止盈位: {take_profit if take_profit > 0 else '未设置'}
-        - 止损位: {stop_loss if stop_loss > 0 else '未设置'}
-        - 投资评级: {rating}
-        """)
+    # --- 4. 预览信息 (放在输入框之前方便对照) ---
+    st.info(f"""
+    **AI 建议参考：**
+    - 进场区间: `{entry_min} - {entry_max}`
+    - 止盈/止损: `{take_profit if take_profit > 0 else '未设置'} / {stop_loss if stop_loss > 0 else '未设置'}`
+    - 评级: **{final_decision.get('rating', '未设置')}**
+    """)
 
-        # 显示表单供用户确认或修改
-        with st.form(key=f"monitor_form_{record['id']}"):
-            st.markdown("**请确认或修改监测参数：**")
+    # --- 5. UI 输入组件 ---
+    # 🚨 注意：使用 record['id'] 确保每个记录的 Key 是唯一的
+    rid = record.get('id', 'default')
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("🎯 触发价格")
+        new_min = st.number_input("最低进场价", value=float(entry_min), format="%.2f", key=f"min_{rid}")
+        new_max = st.number_input("最高进场价", value=float(entry_max), format="%.2f", key=f"max_{rid}")
+    
+    with col2:
+        st.subheader("⚙️ 目标设置")
+        new_tp = st.number_input("目标止盈", value=float(take_profit), format="%.2f", key=f"tp_{rid}")
+        new_sl = st.number_input("风险止损", value=float(stop_loss), format="%.2f", key=f"sl_{rid}")
 
-            col1, col2 = st.columns([1, 1])
+    # 额外的监测设置
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        check_interval = st.slider("监测频率(分钟)", 5, 120, 30, key=f"interval_{rid}")
+    with col_s2:
+        new_rating = st.selectbox("最终评级", ["买入", "持有", "卖出"], 
+                                 index=["买入", "持有", "卖出"].index(final_decision.get('rating', '买入')) 
+                                 if final_decision.get('rating') in ["买入", "持有", "卖出"] else 0,
+                                 key=f"rating_{rid}")
 
-            with col1:
-                st.subheader("🎯 关键位置")
-                new_entry_min = st.number_input("进场区间最低价", value=float(entry_min), step=0.01, format="%.2f")
-                new_entry_max = st.number_input("进场区间最高价", value=float(entry_max), step=0.01, format="%.2f")
-                new_take_profit = st.number_input("止盈价位", value=float(take_profit), step=0.01, format="%.2f")
-                new_stop_loss = st.number_input("止损价位", value=float(stop_loss), step=0.01, format="%.2f")
+    st.divider()
 
-            with col2:
-                st.subheader("⚙️ 监测设置")
-                check_interval = st.slider("监测间隔(分钟)", 5, 120, 30)
-                notification_enabled = st.checkbox("启用通知", value=True)
-                new_rating = st.selectbox("投资评级", ["买入", "持有", "卖出"],
-                                         index=["买入", "持有", "卖出"].index(rating) if rating in ["买入", "持有", "卖出"] else 0)
-
-            col_a, col_b, col_c = st.columns(3)
-
-            with col_a:
-                submit = st.form_submit_button("✅ 确认加入监测", type="primary", width='stretch')
-
-            with col_b:
-                cancel = st.form_submit_button("❌ 取消", width='stretch')
-
-            if submit:
-                if new_entry_min > 0 and new_entry_max > 0 and new_entry_max > new_entry_min:
-                    try:
-                        # 添加到监测数据库
-                        entry_range = {"min": new_entry_min, "max": new_entry_max}
-
-                        stock_id = monitor_db.add_monitored_stock(
-                            symbol=record['symbol'],
-                            name=record['stock_name'],
-                            rating=new_rating,
-                            entry_range=entry_range,
-                            take_profit=new_take_profit if new_take_profit > 0 else None,
-                            stop_loss=new_stop_loss if new_stop_loss > 0 else None,
-                            check_interval=check_interval,
-                            notification_enabled=notification_enabled
-                        )
-
-                        st.success(f"✅ 已成功将 {record['symbol']} 加入监测列表！")
+    # --- 6. 提交动作 ---
+    btn_col1, btn_col2 = st.columns(2)
+    with btn_col1:
+        if st.button("✅ 确认加入监测", type="primary", use_container_width=True, key=f"confirm_{rid}"):
+            # 校验：至少最高价要大于0
+            if new_max > 0:
+                try:
+                    # 封装数据
+                    entry_range = {"min": new_min, "max": new_max}
+                    
+                    # 写入数据库 (请确保 monitor_db.add_monitored_stock 接收这些参数)
+                    stock_id = monitor_db.add_monitored_stock(
+                        symbol=record['symbol'],
+                        name=record['stock_name'],
+                        rating=new_rating,
+                        entry_range=entry_range,
+                        take_profit=new_tp if new_tp > 0 else None,
+                        stop_loss=new_sl if new_sl > 0 else None,
+                        check_interval=check_interval,
+                        notification_enabled=True
+                    )
+                    
+                    if stock_id:
+                        st.success(f"已成功将 {record['symbol']} 加入监测！")
                         st.balloons()
-
-                        # 立即更新一次价格
+                        
+                        # 触发首次更新
                         from monitor_service import monitor_service
                         monitor_service.manual_update_stock(stock_id)
-
-                        # 清理session state并跳转到监测页面
-                        if 'add_to_monitor_id' in st.session_state:
-                            del st.session_state.add_to_monitor_id
-                        if 'viewing_record_id' in st.session_state:
-                            del st.session_state.viewing_record_id
-                        if 'show_history' in st.session_state:
-                            del st.session_state.show_history
-
-                        # 设置跳转到监测页面
-                        st.session_state.show_monitor = True
-                        st.session_state.monitor_jump_highlight = record['symbol']  # 标记要高亮显示的股票
-
-                        time.sleep(1.5)
+                        
+                        time.sleep(1)
                         st.rerun()
+                except Exception as e:
+                    st.error(f"写入失败: {e}")
+            else:
+                st.error("请输入有效的最高进场价")
 
-                    except Exception as e:
-                        st.error(f"❌ 加入监测失败: {str(e)}")
-                else:
-                    st.error("❌ 请输入有效的进场区间（最低价应小于最高价，且都大于0）")
-
-            if cancel:
-                if 'add_to_monitor_id' in st.session_state:
-                    del st.session_state.add_to_monitor_id
-                st.rerun()
-    else:
-        st.warning("⚠️ 无法从分析结果中提取关键数据")
-        if st.button("❌ 取消"):
-            if 'add_to_monitor_id' in st.session_state:
-                del st.session_state.add_to_monitor_id
+    with btn_col2:
+        if st.button("❌ 取消", use_container_width=True, key=f"cancel_{rid}"):
             st.rerun()
+   
 
 def display_record_detail(record_id):
     """显示单条记录的详细信息"""
@@ -2360,6 +2311,7 @@ def display_record_detail(record_id):
 
                 with col2_2:
                     st.write(f"**止损位:** {final_decision.get('stop_loss', None)}")
+                    st.write(f"**持损位:** {final_decision.get('stop_loss', None)}")
                     st.write(f"**持有周期:** {final_decision.get('holding_period', None)}")
         else:
             decision_text = final_decision.get('decision_text', str(final_decision))
@@ -2377,9 +2329,10 @@ def display_record_detail(record_id):
         col1, col2 = st.columns([1, 3])
 
         with col1:
-            if st.button("➕ 加入监测", type="primary", width='stretch'):
-                st.session_state.add_to_monitor_id = record_id
-                st.rerun()
+            if st.button("➕ 加入监测", type="primary", key=f"btn_{record_id}"):
+                # st.session_state.add_to_monitor_id = record_id
+                # st.rerun()
+                display_add_to_monitor_dialog(record)
 
     # 返回按钮
     st.markdown("---")
