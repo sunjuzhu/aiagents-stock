@@ -8,6 +8,7 @@ import time
 import base64
 import os
 import config
+import json
 
 from stock_data import StockDataFetcher
 from ai_agents import StockAnalysisAgents
@@ -1927,75 +1928,11 @@ def display_history_records():
         st.warning("🔍 未找到匹配的记录")
         return
 
-    # # 显示记录列表
-    # for record in filtered_records:
-    #     # 根据评级设置颜色和图标
-    #     rating = record.get('rating', '未知')
-    #     rating_color = {
-    #         "买入": "🟢",
-    #         "持有": "🟡",
-    #         "卖出": "🔴",
-    #         "强烈买入": "🟢",
-    #         "强烈卖出": "🔴"
-    #     }.get(rating, "⚪")
-
-    #     with st.expander(f"{rating_color} {record['stock_name']} ({record['symbol']}) - {record['analysis_date']}"):
-    #         col1, col2, col3, col4 = st.columns([1, 1, 1, 2.5])
-
-    #         with col1:
-    #             st.write(f"**股票代码:** {record['symbol']}")
-    #             st.write(f"**股票名称:** {record['stock_name']}")
-
-    #         with col2:
-    #             st.write(f"**分析时间:** {record['analysis_date']}")
-    #             st.write(f"**数据周期:** {record['period']}")
-    #             st.write(f"**投资评级:** **{rating}**")
-
-    #         # with col3:
-    #         #     if st.button("👀 查看详情", key=f"view_{record['id']}"):
-    #         #         st.session_state.viewing_record_id = record['id']
-
-    #         with col3:
-    #     # 构造 URL 参数
-    #             detail_url = f"/?view_id={record['id']}"
-                
-    #             # 渲染为一个看起来像按钮的超链接，target="_blank" 代表新窗口打开
-    #             st.markdown(f"""
-    #                 <a href="{detail_url}" target="_blank" style="text-decoration: none;">
-    #                     <div style="
-    #                         background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
-    #                         color: white;
-    #                         padding: 10px 20px;
-    #                         border-radius: 10px;
-    #                         text-align: center;
-    #                         font-weight: bold;
-    #                         cursor: pointer;
-    #                         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    #                     ">
-    #                         👀 查看详情
-    #                     </div>
-    #                 </a>
-    #             """, unsafe_allow_html=True)
-
-    #         with col4:
-    #             if st.button("➕ 监测", key=f"add_monitor_{record['id']}"):
-    #                 st.session_state.add_to_monitor_id = record['id']
-    #                 st.session_state.viewing_record_id = record['id']
-
-    #         # 删除按钮（新增一行）
-    #         col5, _, _, _ = st.columns(4)
-    #         with col5:
-    #             if st.button("🗑️ 删除", key=f"delete_{record['id']}"):
-    #                 if db.delete_record(record['id']):
-    #                     st.success("✅ 记录已删除")
-    #                     st.rerun()
-    #                 else:
-    #                     st.error("❌ 删除失败")
-    # 显示记录列表
     for record in filtered_records:
         rating = record.get('rating', '未知')
         rating_color = {"买入": "🟢", "持有": "🟡", "卖出": "🔴"}.get(rating[:2], "⚪")
-
+        final_decision =json.loads(record.get('final_decision', '{}')) if isinstance(record.get('final_decision'), str) else record.get('final_decision', {})
+        advice = final_decision.get('operation_advice', '暂无建议') if isinstance(final_decision, dict) else '暂无建议'
         with st.expander(f"{rating_color} {record['stock_name']} ({record['symbol']}) - {record['analysis_date']}"):
             # 重新调整比例，让按钮和文字分布更均匀
             col1, col2, col3, col4 = st.columns([1.2, 1.2, 1.5, 1.2])
@@ -2036,6 +1973,11 @@ def display_history_records():
                     st.session_state.viewing_record_id = record['id']
                     st.success(f"已加入监测列表")
 
+            # --- 新增：操作建议显示区域 ---
+            st.markdown("---") # 分割线
+            st.markdown("**💡 决策逻辑与建议:**")
+            st.info(advice) # 使用蓝色信息框显示，视觉上更有条理
+
             # --- 下方功能小行 ---
             st.write("") # 增加一点间距
             sub_col1, sub_col2, _ = st.columns([1, 1, 4])
@@ -2067,6 +2009,7 @@ def display_add_to_monitor_dialog(record):
     print(f"DEBUG: Entering display_add_to_monitor_dialog for {record.get('symbol')}")
     
     # --- 1. 安全检查 ---
+    stock_name = record.get('stock_name', '未知股票')
     final_decision = record.get('final_decision', {})
     if not isinstance(final_decision, dict):
         st.error("⚠️ 无法从分析结果中提取决策数据，建议重新生成分析。")
@@ -2105,6 +2048,7 @@ def display_add_to_monitor_dialog(record):
     # --- 4. 预览信息 (放在输入框之前方便对照) ---
     st.info(f"""
     **AI 建议参考：**
+    - 股票名称: **{stock_name}** ({record['symbol']})
     - 进场区间: `{entry_min} - {entry_max}`
     - 止盈/止损: `{take_profit if take_profit > 0 else '未设置'} / {stop_loss if stop_loss > 0 else '未设置'}`
     - 评级: **{final_decision.get('rating', '未设置')}**
@@ -2134,6 +2078,14 @@ def display_add_to_monitor_dialog(record):
                                  index=["买入", "持有", "卖出"].index(final_decision.get('rating', '买入')) 
                                  if final_decision.get('rating') in ["买入", "持有", "卖出"] else 0,
                                  key=f"rating_{rid}")
+    default_advice = final_decision.get('operation_advice', '无')
+    new_advice = st.text_area(
+        "操作建议", 
+        value=default_advice, 
+        height=100, 
+        help="此处内容将同步至监测卡片，方便随时查看交易逻辑",
+        key=f"advice_{rid}"
+    )
 
     st.divider()
 
@@ -2152,6 +2104,7 @@ def display_add_to_monitor_dialog(record):
                         symbol=record['symbol'],
                         name=record['stock_name'],
                         rating=new_rating,
+                        operation_advice=new_advice,
                         entry_range=entry_range,
                         take_profit=new_tp if new_tp > 0 else None,
                         stop_loss=new_sl if new_sl > 0 else None,
@@ -2273,7 +2226,14 @@ def display_record_detail(record_id):
 
     # 最终决策
     st.subheader("📋 最终投资决策")
-    final_decision = record['final_decision']
+    final_decision = record.get('final_decision', {})
+    if isinstance(final_decision, str):
+        try:
+
+            final_decision = json.loads(final_decision)
+        except:
+            final_decision = {}
+    
     if final_decision:
         if isinstance(final_decision, dict) and "decision_text" not in final_decision:
             col1, col2 = st.columns([1, 2])

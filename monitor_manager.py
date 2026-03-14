@@ -102,7 +102,7 @@ def display_add_stock_section():
             st.subheader("📈 股票信息")
             symbol = st.text_input("股票代码", placeholder="例如: AAPL, 000001", help="支持美股和A股代码")
             name = st.text_input("股票名称", placeholder="例如: 苹果公司", help="可选，用于显示")
-            
+            operation_advice = st.text_input("操作建议", placeholder="例如: 现有持仓者可继续持有，空仓者等待放量突破", help="可选，用于显示")
             # 获取股票基本信息
             if symbol:
                 if st.button("🔍 获取股票信息"):
@@ -166,6 +166,7 @@ def display_add_stock_section():
                         symbol=symbol,
                         name=name or symbol,
                         rating=rating,
+                        operation_advice=operation_advice,
                         entry_range=entry_range,
                         take_profit=take_profit if take_profit > 0 else None,
                         stop_loss=stop_loss if stop_loss > 0 else None,
@@ -375,83 +376,6 @@ def display_edit_dialog(stock_id: int):
     
     st.markdown("---")
     st.markdown(f"### ✏️ 编辑监测 - {stock['symbol']} {stock['name']}")
-    
-    # with st.form(key=f"edit_form_{stock_id}"):
-    #     col1, col2 = st.columns([1, 1])
-        
-    #     with col1:
-    #         st.subheader("🎯 关键位置")
-    #         entry_range = stock.get('entry_range', {})
-    #         entry_min = st.number_input("进场区间最低价", value=float(entry_range.get('min', 0)), step=0.01, format="%.2f")
-    #         entry_max = st.number_input("进场区间最高价", value=float(entry_range.get('max', 0)), step=0.01, format="%.2f")
-    #         take_profit = st.number_input("止盈价位", value=float(stock['take_profit']) if stock['take_profit'] else 0.0, step=0.01, format="%.2f")
-    #         stop_loss = st.number_input("止损价位", value=float(stock['stop_loss']) if stock['stop_loss'] else 0.0, step=0.01, format="%.2f")
-        
-    #     with col2:
-    #         st.subheader("⚙️ 监测设置")
-    #         check_interval = st.slider("监测间隔(分钟)", 5, 120, stock['check_interval'])
-    #         rating = st.selectbox("投资评级", ["买入", "持有", "卖出"], 
-    #                              index=["买入", "持有", "卖出"].index(stock['rating']) if stock['rating'] in ["买入", "持有", "卖出"] else 0)
-    #         notification_enabled = st.checkbox("启用通知", value=stock['notification_enabled'])
-            
-    #         # 量化交易设置
-    #         st.markdown("**🤖 量化交易**")
-    #         quant_enabled = st.checkbox("启用量化自动交易", value=stock.get('quant_enabled', False))
-            
-    #         if quant_enabled:
-    #             quant_config = stock.get('quant_config', {})
-    #             max_position_pct = st.slider("最大仓位比例", 0.05, 0.5, 
-    #                                         quant_config.get('max_position_pct', 0.2), 0.05)
-    #             auto_stop_loss = st.checkbox("自动止损", value=quant_config.get('auto_stop_loss', True))
-    #             auto_take_profit = st.checkbox("自动止盈", value=quant_config.get('auto_take_profit', True))
-        
-    #     col1, col2, col3 = st.columns(3)
-        
-    #     with col1:
-    #         submit = st.form_submit_button("✅ 保存修改", type="primary", width='stretch')
-        
-    #     with col2:
-    #         cancel = st.form_submit_button("❌ 取消", width='stretch')
-        
-    #     if submit:
-    #         if entry_min > 0 and entry_max > 0 and entry_max > entry_min:
-    #             try:
-    #                 # 更新数据库
-    #                 new_entry_range = {"min": entry_min, "max": entry_max}
-                    
-    #                 # 准备量化配置
-    #                 new_quant_config = None
-    #                 if quant_enabled:
-    #                     new_quant_config = {
-    #                         'max_position_pct': max_position_pct,
-    #                         'auto_stop_loss': auto_stop_loss,
-    #                         'auto_take_profit': auto_take_profit,
-    #                         'min_trade_amount': 5000
-    #                     }
-                    
-    #                 monitor_db.update_monitored_stock(
-    #                     stock_id=stock_id,
-    #                     rating=rating,
-    #                     entry_range=new_entry_range,
-    #                     take_profit=take_profit if take_profit > 0 else None,
-    #                     stop_loss=stop_loss if stop_loss > 0 else None,
-    #                     check_interval=check_interval,
-    #                     notification_enabled=notification_enabled,
-    #                     quant_enabled=quant_enabled,
-    #                     quant_config=new_quant_config
-    #                 )
-                    
-    #                 st.success("✅ 修改已保存")
-    #                 del st.session_state.editing_stock_id
-    #                 st.rerun()
-    #             except Exception as e:
-    #                 st.error(f"❌ 保存失败: {str(e)}")
-    #         else:
-    #             st.error("❌ 请输入有效的进场区间")
-        
-    #     if cancel:
-    #         del st.session_state.editing_stock_id
-    #         st.rerun()
     # --- 修改后的代码 ---
     with col_manage:
         st.markdown("##### 🛠️ 管理操作")

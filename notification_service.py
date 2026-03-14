@@ -139,6 +139,7 @@ class NotificationService:
             <p><strong>股票名称:</strong> {notification['name']}</p>
             <p><strong>提醒类型:</strong> {notification['type']}</p>
             <p><strong>提醒内容:</strong> {notification['message']}</p>
+            <p><strong>操作建议:</strong> {notification.get('operation_advice', '暂无建议')}</p>
             <p><strong>触发时间:</strong> {notification['triggered_at']}</p>
             <hr>
             <p><em>此邮件由AI股票分析系统自动发送</em></p>

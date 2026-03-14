@@ -184,6 +184,7 @@ class StockMonitorService:
         entry_range = stock.get('entry_range', {})
         take_profit = stock.get('take_profit')
         stop_loss = stock.get('stop_loss')
+        operation_advice= stock.get('operation_advice', '暂无建议')
         
         # 检查进场区间
         if entry_range and entry_range.get('min') and entry_range.get('max'):
@@ -191,7 +192,7 @@ class StockMonitorService:
                 # 检查是否在最近60分钟内已发送过相同通知，避免重复
                 if not monitor_db.has_recent_notification(stock['id'], 'entry', minutes=60):
                     message = f"股票 {stock['symbol']} ({stock['name']}) 价格 {current_price} 进入进场区间 [{entry_range['min']}-{entry_range['max']}]"
-                    monitor_db.add_notification(stock['id'], 'entry', message)
+                    monitor_db.add_notification(stock['id'], 'entry', message,operation_advice)
                     
                     # 立即发送通知（包括邮件）
                     notification_service.send_notifications()
@@ -205,7 +206,7 @@ class StockMonitorService:
             # 检查是否在最近60分钟内已发送过相同通知，避免重复
             if not monitor_db.has_recent_notification(stock['id'], 'take_profit', minutes=60):
                 message = f"股票 {stock['symbol']} ({stock['name']}) 价格 {current_price} 达到止盈位 {take_profit}"
-                monitor_db.add_notification(stock['id'], 'take_profit', message)
+                monitor_db.add_notification(stock['id'], 'take_profit', message,operation_advice)
                 
                 # 立即发送通知（包括邮件）
                 notification_service.send_notifications()
@@ -219,7 +220,7 @@ class StockMonitorService:
             # 检查是否在最近60分钟内已发送过相同通知，避免重复
             if not monitor_db.has_recent_notification(stock['id'], 'stop_loss', minutes=60):
                 message = f"股票 {stock['symbol']} ({stock['name']}) 价格 {current_price} 达到止损位 {stop_loss}"
-                monitor_db.add_notification(stock['id'], 'stop_loss', message)
+                monitor_db.add_notification(stock['id'], 'stop_loss', message,operation_advice)
                 
                 # 立即发送通知（包括邮件）
                 notification_service.send_notifications()
@@ -263,7 +264,8 @@ class StockMonitorService:
                 monitor_db.add_notification(
                     stock['id'], 
                     'quant_trade', 
-                    f"量化交易执行: {msg}"
+                    f"量化交易执行: {msg}",
+                    f"操作建议：{stock.get('operation_advice', '暂无建议')}"
                 )
                 # 立即发送通知（包括邮件）
                 notification_service.send_notifications()

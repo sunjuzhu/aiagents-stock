@@ -87,6 +87,7 @@ class StockAnalysisDatabase:
                 'id': record[0],
                 'symbol': record[1],
                 'stock_name': record[2],
+                'final_decision': final_decision,
                 'analysis_date': record[3],
                 'period': record[4],
                 'rating': rating,

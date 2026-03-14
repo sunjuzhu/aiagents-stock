@@ -27,6 +27,7 @@ class StockMonitorDatabase:
                 symbol TEXT NOT NULL,
                 name TEXT NOT NULL,
                 rating TEXT NOT NULL,
+                operation_advice TEXT,
                 entry_range TEXT NOT NULL,  -- JSON格式: {"min": 10.0, "max": 12.0}
                 take_profit REAL,
                 stop_loss REAL,
@@ -67,6 +68,7 @@ class StockMonitorDatabase:
                 stock_id INTEGER,
                 type TEXT NOT NULL,  -- entry/take_profit/stop_loss
                 message TEXT NOT NULL,
+                operation_advice TEXT,
                 triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 sent BOOLEAN DEFAULT FALSE,
                 FOREIGN KEY (stock_id) REFERENCES monitored_stocks (id)
@@ -76,7 +78,7 @@ class StockMonitorDatabase:
         conn.commit()
         conn.close()
     
-    def add_monitored_stock(self, symbol: str, name: str, rating: str, 
+    def add_monitored_stock(self, symbol: str, name: str, rating: str, operation_advice: str, 
                            entry_range: Dict, take_profit: float, 
                            stop_loss: float, check_interval: int = 30, 
                            notification_enabled: bool = True,
@@ -91,10 +93,10 @@ class StockMonitorDatabase:
         
         cursor.execute('''
             INSERT INTO monitored_stocks 
-            (symbol, name, rating, entry_range, take_profit, stop_loss, check_interval, 
+            (symbol, name, rating, operation_advice,entry_range, take_profit, stop_loss, check_interval, 
              notification_enabled, trading_hours_only, quant_enabled, quant_config)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (symbol, name, rating, json.dumps(entry_range), take_profit, stop_loss, 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (symbol, name, rating, operation_advice, json.dumps(entry_range), take_profit, stop_loss, 
               check_interval, notification_enabled, trading_hours_only, quant_enabled, quant_config_json))
         
         stock_id = cursor.lastrowid
@@ -109,7 +111,7 @@ class StockMonitorDatabase:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, symbol, name, rating, entry_range, take_profit, stop_loss, 
+            SELECT id, symbol, name, rating, operation_advice, entry_range, take_profit, stop_loss, 
                    current_price, last_checked, check_interval, notification_enabled,
                    trading_hours_only, quant_enabled, quant_config, created_at, updated_at
             FROM monitored_stocks
@@ -119,8 +121,8 @@ class StockMonitorDatabase:
         stocks = []
         for row in cursor.fetchall():
             try:
-                quant_config = json.loads(row[13]) if row[13] else None
-                entry_range = json.loads(row[4]) if row[4] else None
+                quant_config = json.loads(row[14]) if row[14] else None
+                entry_range = json.loads(row[5]) if row[5] else None
             except (json.JSONDecodeError, TypeError) as e:
                 print(f"警告: 股票 {row[1]} 的JSON解析失败: {e}")
                 entry_range = None
@@ -131,15 +133,16 @@ class StockMonitorDatabase:
                 'symbol': row[1],
                 'name': row[2],
                 'rating': row[3],
+                'operation_advice': row[4],
                 'entry_range': entry_range,
-                'take_profit': row[5],
-                'stop_loss': row[6],
-                'current_price': row[7],
-                'last_checked': row[8],
-                'check_interval': row[9],
-                'notification_enabled': bool(row[10]),
-                'trading_hours_only': bool(row[11]) if row[11] is not None else True,
-                'quant_enabled': bool(row[12]),
+                'take_profit': row[6],
+                'stop_loss': row[7],
+                'current_price': row[8],
+                'last_checked': row[9],
+                'check_interval': row[10],
+                'notification_enabled': bool(row[11]),
+                'trading_hours_only': bool(row[12]) if row[12] is not None else True,
+                'quant_enabled': bool(row[13]),
                 'quant_config': quant_config,
                 'created_at': row[14],
                 'updated_at': row[15]
@@ -199,15 +202,15 @@ class StockMonitorDatabase:
         
         return count > 0
     
-    def add_notification(self, stock_id: int, notification_type: str, message: str):
+    def add_notification(self, stock_id: int, notification_type: str, message: str, operation_advice: str):
         """添加提醒记录"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         cursor.execute('''
-            INSERT INTO notifications (stock_id, type, message)
-            VALUES (?, ?, ?)
-        ''', (stock_id, notification_type, message))
+            INSERT INTO notifications (stock_id, type, message, operation_advice)
+            VALUES (?, ?, ?, ?)
+        ''', (stock_id, notification_type, message, operation_advice))
         
         conn.commit()
         conn.close()
@@ -218,7 +221,7 @@ class StockMonitorDatabase:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT n.id, n.stock_id, s.symbol, s.name, n.type, n.message, n.triggered_at
+            SELECT n.id, n.stock_id, s.symbol, s.name, n.type, n.message, n.operation_advice, n.triggered_at
             FROM notifications n
             JOIN monitored_stocks s ON n.stock_id = s.id
             WHERE n.sent = FALSE
@@ -234,7 +237,8 @@ class StockMonitorDatabase:
                 'name': row[3],
                 'type': row[4],
                 'message': row[5],
-                'triggered_at': row[6]
+                'operation_advice': row[6],
+                'triggered_at': row[7]
             })
         
         conn.close()
@@ -246,7 +250,7 @@ class StockMonitorDatabase:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT n.id, n.stock_id, s.symbol, s.name, n.type, n.message, n.triggered_at, n.sent
+            SELECT n.id, n.stock_id, s.symbol, s.name, n.type, n.message, n.operation_advice, n.triggered_at, n.sent
             FROM notifications n
             JOIN monitored_stocks s ON n.stock_id = s.id
             ORDER BY n.triggered_at DESC
@@ -262,8 +266,9 @@ class StockMonitorDatabase:
                 'name': row[3],
                 'type': row[4],
                 'message': row[5],
-                'triggered_at': row[6],
-                'sent': bool(row[7])
+                'operation_advice': row[6],
+                'triggered_at': row[7],
+                'sent': bool(row[8])
             })
         
         conn.close()
@@ -325,7 +330,7 @@ class StockMonitorDatabase:
             print(f"删除股票失败: {e}")
             return False
     
-    def update_monitored_stock(self, stock_id: int, rating: str, entry_range: Dict, 
+    def update_monitored_stock(self, stock_id: int, rating: str, operation_advice: str, entry_range: Dict, 
                               take_profit: float, stop_loss: float, 
                               check_interval: int, notification_enabled: bool,
                               trading_hours_only: bool = None,
@@ -346,7 +351,7 @@ class StockMonitorDatabase:
             
             cursor.execute(f'''
                 UPDATE monitored_stocks 
-                SET rating = ?, entry_range = ?, take_profit = ?, stop_loss = ?, 
+                SET rating = ?, operation_advice = ?, entry_range = ?, take_profit = ?, stop_loss = ?, 
                     check_interval = ?, notification_enabled = ?, 
                     quant_enabled = ?, quant_config = ?{trading_hours_sql},
                     updated_at = CURRENT_TIMESTAMP
@@ -354,14 +359,14 @@ class StockMonitorDatabase:
             ''', tuple(params))
         else:
             trading_hours_sql = ", trading_hours_only = ?" if trading_hours_only is not None else ""
-            params = [rating, json.dumps(entry_range), take_profit, stop_loss, check_interval, notification_enabled]
+            params = [rating, operation_advice, json.dumps(entry_range), take_profit, stop_loss, check_interval, notification_enabled]
             if trading_hours_only is not None:
                 params.append(trading_hours_only)
             params.append(stock_id)
             
             cursor.execute(f'''
                 UPDATE monitored_stocks 
-                SET rating = ?, entry_range = ?, take_profit = ?, stop_loss = ?, 
+                SET rating = ?, operation_advice = ?, entry_range = ?, take_profit = ?, stop_loss = ?, 
                     check_interval = ?, notification_enabled = ?{trading_hours_sql}, 
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
@@ -394,7 +399,7 @@ class StockMonitorDatabase:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, symbol, name, rating, entry_range, take_profit, stop_loss,
+            SELECT id, symbol, name, rating, operation_advice, entry_range, take_profit, stop_loss,
                    current_price, last_checked, check_interval, notification_enabled,
                    trading_hours_only, quant_enabled, quant_config
             FROM monitored_stocks WHERE id = ?
@@ -405,8 +410,8 @@ class StockMonitorDatabase:
         
         if row:
             try:
-                quant_config = json.loads(row[13]) if row[13] else None
-                entry_range = json.loads(row[4]) if row[4] else None
+                quant_config = json.loads(row[14]) if row[14] else None
+                entry_range = json.loads(row[5]) if row[5] else None
             except (json.JSONDecodeError, TypeError) as e:
                 print(f"警告: 股票 {row[1]} 的JSON解析失败: {e}")
                 entry_range = None
@@ -417,15 +422,16 @@ class StockMonitorDatabase:
                 'symbol': row[1],
                 'name': row[2],
                 'rating': row[3],
+                'operation_advice': row[4],
                 'entry_range': entry_range,
-                'take_profit': row[5],
-                'stop_loss': row[6],
-                'current_price': row[7],
-                'last_checked': row[8],
-                'check_interval': row[9],
-                'notification_enabled': bool(row[10]),
-                'trading_hours_only': bool(row[11]) if row[11] is not None else True,
-                'quant_enabled': bool(row[12]),
+                'take_profit': row[6],
+                'stop_loss': row[7],
+                'current_price': row[8],
+                'last_checked': row[9],
+                'check_interval': row[10],
+                'notification_enabled': bool(row[11]),
+                'trading_hours_only': bool(row[12]) if row[12] is not None else True,
+                'quant_enabled': bool(row[13]),
                 'quant_config': quant_config
             }
         return None
@@ -452,8 +458,8 @@ class StockMonitorDatabase:
         
         if row:
             try:
-                entry_range = json.loads(row[4]) if row[4] else None
-                quant_config = json.loads(row[12]) if row[12] else None
+                entry_range = json.loads(row[5]) if row[5] else None
+                quant_config = json.loads(row[13]) if row[13] else None
             except (json.JSONDecodeError, TypeError) as e:
                 print(f"警告: 股票 {row[1]} 的JSON解析失败: {e}")
                 entry_range = None
@@ -464,6 +470,7 @@ class StockMonitorDatabase:
                 'symbol': row[1],
                 'name': row[2],
                 'rating': row[3],
+                'operation_advice': row[4],
                 'entry_range': entry_range,
                 'take_profit': row[5],
                 'stop_loss': row[6],
@@ -485,6 +492,7 @@ class StockMonitorDatabase:
                 - code/symbol: 股票代码
                 - name: 股票名称  
                 - rating: 投资评级
+                - operation_advice: 操作建议（可选）
                 - entry_min, entry_max: 进场区间
                 - take_profit: 止盈位
                 - stop_loss: 止损位
@@ -504,6 +512,7 @@ class StockMonitorDatabase:
                 symbol = data.get('code') or data.get('symbol')
                 name = data.get('name', symbol)
                 rating = data.get('rating', '持有')
+                operation_advice = data.get('operation_advice', '')
                 entry_min = data.get('entry_min')
                 entry_max = data.get('entry_max')
                 take_profit = data.get('take_profit')
@@ -529,6 +538,7 @@ class StockMonitorDatabase:
                     self.update_monitored_stock(
                         existing['id'],
                         rating=rating,
+                        operation_advice=operation_advice,
                         entry_range=entry_range,
                         take_profit=take_profit,
                         stop_loss=stop_loss,
@@ -544,6 +554,7 @@ class StockMonitorDatabase:
                         symbol=symbol,
                         name=name,
                         rating=rating,
+                        operation_advice=operation_advice,
                         entry_range=entry_range,
                         take_profit=take_profit,
                         stop_loss=stop_loss,
