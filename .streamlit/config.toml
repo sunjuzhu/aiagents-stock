@@ -1,5 +1,10 @@
 [theme]
 base = "light"
+primaryColor = "#ff4b4b"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#31333f"  # 👈 显式指定颜色，消除 JavaScript 异常
+
 [server]
 port = 8503
 address = "127.0.0.1"

@@ -376,141 +376,150 @@ def display_edit_dialog(stock_id: int):
     st.markdown("---")
     st.markdown(f"### ✏️ 编辑监测 - {stock['symbol']} {stock['name']}")
     
-    with st.form(key=f"edit_form_{stock_id}"):
-        col1, col2 = st.columns([1, 1])
+    # with st.form(key=f"edit_form_{stock_id}"):
+    #     col1, col2 = st.columns([1, 1])
         
-        with col1:
-            st.subheader("🎯 关键位置")
-            entry_range = stock.get('entry_range', {})
-            entry_min = st.number_input("进场区间最低价", value=float(entry_range.get('min', 0)), step=0.01, format="%.2f")
-            entry_max = st.number_input("进场区间最高价", value=float(entry_range.get('max', 0)), step=0.01, format="%.2f")
-            take_profit = st.number_input("止盈价位", value=float(stock['take_profit']) if stock['take_profit'] else 0.0, step=0.01, format="%.2f")
-            stop_loss = st.number_input("止损价位", value=float(stock['stop_loss']) if stock['stop_loss'] else 0.0, step=0.01, format="%.2f")
+    #     with col1:
+    #         st.subheader("🎯 关键位置")
+    #         entry_range = stock.get('entry_range', {})
+    #         entry_min = st.number_input("进场区间最低价", value=float(entry_range.get('min', 0)), step=0.01, format="%.2f")
+    #         entry_max = st.number_input("进场区间最高价", value=float(entry_range.get('max', 0)), step=0.01, format="%.2f")
+    #         take_profit = st.number_input("止盈价位", value=float(stock['take_profit']) if stock['take_profit'] else 0.0, step=0.01, format="%.2f")
+    #         stop_loss = st.number_input("止损价位", value=float(stock['stop_loss']) if stock['stop_loss'] else 0.0, step=0.01, format="%.2f")
         
-        with col2:
-            st.subheader("⚙️ 监测设置")
-            check_interval = st.slider("监测间隔(分钟)", 5, 120, stock['check_interval'])
-            rating = st.selectbox("投资评级", ["买入", "持有", "卖出"], 
-                                 index=["买入", "持有", "卖出"].index(stock['rating']) if stock['rating'] in ["买入", "持有", "卖出"] else 0)
-            notification_enabled = st.checkbox("启用通知", value=stock['notification_enabled'])
+    #     with col2:
+    #         st.subheader("⚙️ 监测设置")
+    #         check_interval = st.slider("监测间隔(分钟)", 5, 120, stock['check_interval'])
+    #         rating = st.selectbox("投资评级", ["买入", "持有", "卖出"], 
+    #                              index=["买入", "持有", "卖出"].index(stock['rating']) if stock['rating'] in ["买入", "持有", "卖出"] else 0)
+    #         notification_enabled = st.checkbox("启用通知", value=stock['notification_enabled'])
             
-            # 量化交易设置
-            st.markdown("**🤖 量化交易**")
-            quant_enabled = st.checkbox("启用量化自动交易", value=stock.get('quant_enabled', False))
+    #         # 量化交易设置
+    #         st.markdown("**🤖 量化交易**")
+    #         quant_enabled = st.checkbox("启用量化自动交易", value=stock.get('quant_enabled', False))
             
-            if quant_enabled:
-                quant_config = stock.get('quant_config', {})
-                max_position_pct = st.slider("最大仓位比例", 0.05, 0.5, 
-                                            quant_config.get('max_position_pct', 0.2), 0.05)
-                auto_stop_loss = st.checkbox("自动止损", value=quant_config.get('auto_stop_loss', True))
-                auto_take_profit = st.checkbox("自动止盈", value=quant_config.get('auto_take_profit', True))
+    #         if quant_enabled:
+    #             quant_config = stock.get('quant_config', {})
+    #             max_position_pct = st.slider("最大仓位比例", 0.05, 0.5, 
+    #                                         quant_config.get('max_position_pct', 0.2), 0.05)
+    #             auto_stop_loss = st.checkbox("自动止损", value=quant_config.get('auto_stop_loss', True))
+    #             auto_take_profit = st.checkbox("自动止盈", value=quant_config.get('auto_take_profit', True))
         
-        col1, col2, col3 = st.columns(3)
+    #     col1, col2, col3 = st.columns(3)
         
-        with col1:
-            submit = st.form_submit_button("✅ 保存修改", type="primary", width='stretch')
+    #     with col1:
+    #         submit = st.form_submit_button("✅ 保存修改", type="primary", width='stretch')
         
-        with col2:
-            cancel = st.form_submit_button("❌ 取消", width='stretch')
+    #     with col2:
+    #         cancel = st.form_submit_button("❌ 取消", width='stretch')
         
-        if submit:
-            if entry_min > 0 and entry_max > 0 and entry_max > entry_min:
-                try:
-                    # 更新数据库
-                    new_entry_range = {"min": entry_min, "max": entry_max}
+    #     if submit:
+    #         if entry_min > 0 and entry_max > 0 and entry_max > entry_min:
+    #             try:
+    #                 # 更新数据库
+    #                 new_entry_range = {"min": entry_min, "max": entry_max}
                     
-                    # 准备量化配置
-                    new_quant_config = None
-                    if quant_enabled:
-                        new_quant_config = {
-                            'max_position_pct': max_position_pct,
-                            'auto_stop_loss': auto_stop_loss,
-                            'auto_take_profit': auto_take_profit,
-                            'min_trade_amount': 5000
-                        }
+    #                 # 准备量化配置
+    #                 new_quant_config = None
+    #                 if quant_enabled:
+    #                     new_quant_config = {
+    #                         'max_position_pct': max_position_pct,
+    #                         'auto_stop_loss': auto_stop_loss,
+    #                         'auto_take_profit': auto_take_profit,
+    #                         'min_trade_amount': 5000
+    #                     }
                     
-                    monitor_db.update_monitored_stock(
-                        stock_id=stock_id,
-                        rating=rating,
-                        entry_range=new_entry_range,
-                        take_profit=take_profit if take_profit > 0 else None,
-                        stop_loss=stop_loss if stop_loss > 0 else None,
-                        check_interval=check_interval,
-                        notification_enabled=notification_enabled,
-                        quant_enabled=quant_enabled,
-                        quant_config=new_quant_config
-                    )
+    #                 monitor_db.update_monitored_stock(
+    #                     stock_id=stock_id,
+    #                     rating=rating,
+    #                     entry_range=new_entry_range,
+    #                     take_profit=take_profit if take_profit > 0 else None,
+    #                     stop_loss=stop_loss if stop_loss > 0 else None,
+    #                     check_interval=check_interval,
+    #                     notification_enabled=notification_enabled,
+    #                     quant_enabled=quant_enabled,
+    #                     quant_config=new_quant_config
+    #                 )
                     
-                    st.success("✅ 修改已保存")
-                    del st.session_state.editing_stock_id
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"❌ 保存失败: {str(e)}")
-            else:
-                st.error("❌ 请输入有效的进场区间")
+    #                 st.success("✅ 修改已保存")
+    #                 del st.session_state.editing_stock_id
+    #                 st.rerun()
+    #             except Exception as e:
+    #                 st.error(f"❌ 保存失败: {str(e)}")
+    #         else:
+    #             st.error("❌ 请输入有效的进场区间")
         
-        if cancel:
-            del st.session_state.editing_stock_id
+    #     if cancel:
+    #         del st.session_state.editing_stock_id
+    #         st.rerun()
+    # --- 修改后的代码 ---
+    with col_manage:
+        st.markdown("##### 🛠️ 管理操作")
+        
+        # 1. 立即更新按钮
+        if st.button("🔄 立即更新", key=f"upd_{stock['id']}", use_container_width=True):
+            monitor_service.manual_update_stock(stock['id'])
+            st.success("更新请求已发送")
+            time.sleep(0.5)
             st.rerun()
 
-def display_delete_confirm_dialog(stock_id: int):
+        # 2. 优化后的删除逻辑 (使用 popover 替代 form)
+        if st.button("🗑️ 删除监测", key=f"del_trig_{stock['id']}", use_container_width=True):
+            st.session_state.deleting_stock_id = stock['id'] # 👈 只记录 ID
+            st.rerun() # 👈 强制刷新，让页面走到 244 行的检测逻辑
+
+        # 3. 编辑按钮
+        if st.button("📝 编辑设置", key=f"edit_{stock['id']}", use_container_width=True):
+            st.session_state.editing_stock_id = stock['id']
+            st.rerun()
+
+@st.dialog("⚠️ 确认删除监测")
+def display_delete_confirm_dialog(stock_id):
     """显示删除确认对话框"""
     
-    stock = monitor_db.get_stock_by_id(stock_id)
+    # 1. 获取当前所有监测股票
+    stocks = monitor_db.get_monitored_stocks()
+    stock = next((s for s in stocks if s['id'] == stock_id), None)
+    
     if not stock:
-        st.error("❌ 股票不存在或已被删除")
-        if 'deleting_stock_id' in st.session_state:
-            del st.session_state.deleting_stock_id
-        st.rerun()
+        st.error("未找到该股票信息")
+        # 即使是关闭按钮，也建议给个唯一 key
+        if st.button("关闭", key=f"close_err_{stock_id}"):
+            if 'deleting_stock_id' in st.session_state:
+                del st.session_state.deleting_stock_id
+            st.rerun()
         return
+
+    s_name = stock.get('name') or stock.get('stock_name') or "未知股票"
+    s_symbol = stock.get('symbol') or "未知代码"
+
+    st.warning(f"确定要停止对 **{s_name} ({s_symbol})** 的实时监测吗？")
     
-    st.markdown("---")
-    st.markdown(f"### ⚠️ 确认删除")
-    
-    st.warning(f"""
-    您确定要删除以下监测吗？
-    
-    **股票代码**: {stock['symbol']}
-    
-    **股票名称**: {stock['name']}
-    
-    **投资评级**: {stock['rating']}
-    
-    此操作不可撤销！
-    """)
-    
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
+    col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ 确认删除", type="primary", width='stretch', key=f"confirm_delete_{stock_id}"):
-            try:
-                result = monitor_db.remove_monitored_stock(stock_id)
-                if result:
-                    # 清理session state
-                    if 'deleting_stock_id' in st.session_state:
-                        del st.session_state.deleting_stock_id
-                    
-                    st.success("✅ 已成功删除监测")
-                    st.balloons()
-                    time.sleep(0.8)  # 短暂延迟，让用户看到成功消息
-                    st.rerun()
-                else:
-                    st.error("❌ 删除失败：股票不存在或已被删除")
-                    time.sleep(1)
-                    if 'deleting_stock_id' in st.session_state:
-                        del st.session_state.deleting_stock_id
-                    st.rerun()
-            except Exception as e:
-                st.error(f"❌ 删除失败：{str(e)}")
-                time.sleep(1)
+        # 🚨 关键修复：添加 key=f"confirm_del_{stock_id}"
+        if st.button("🔥 确认删除", 
+                     type="primary", 
+                     use_container_width=True, 
+                     key=f"confirm_del_{stock_id}"): # <--- 必须唯一
+            if monitor_db.remove_monitored_stock(stock_id):
+                st.success(f"✅ {s_name} 已成功移除")
                 if 'deleting_stock_id' in st.session_state:
                     del st.session_state.deleting_stock_id
+                time.sleep(0.8)
                 st.rerun()
-    
+            else:
+                st.error("❌ 数据库删除失败")
+                
     with col2:
-        if st.button("❌ 取消", width='stretch', key=f"cancel_delete_{stock_id}"):
-            del st.session_state.deleting_stock_id
+        # 🚨 关键修复：添加 key=f"cancel_del_{stock_id}"
+        if st.button("取消", 
+                     use_container_width=True, 
+                     key=f"cancel_del_{stock_id}"): # <--- 必须唯一
+            if 'deleting_stock_id' in st.session_state:
+                del st.session_state.deleting_stock_id
             st.rerun()
+
 
 def display_notification_management():
     """显示通知管理"""
