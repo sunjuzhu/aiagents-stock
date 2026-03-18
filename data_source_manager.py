@@ -7,10 +7,26 @@ import os
 import pandas as pd
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from data_manager import local_data_manager
+from smart_monitor_tdx_data import SmartMonitorTDXDataFetcher
+
 
 # 加载环境变量
 load_dotenv()
 
+tdxDataFetcher = SmartMonitorTDXDataFetcher()
+
+import requests
+
+def disable_proxy():
+    """彻底禁用当前进程的代理环境变量"""
+    proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'ALL_PROXY']
+    for var in proxy_vars:
+        if var in os.environ:
+            del os.environ[var]
+    
+    # 强制让 requests 库不使用代理
+    os.environ['NO_PROXY'] = '*'
 
 class DataSourceManager:
     """数据源管理器 - 实现akshare与tushare自动切换"""
@@ -54,11 +70,14 @@ class DataSourceManager:
             end_date = end_date.replace('-', '')
         else:
             end_date = datetime.now().strftime('%Y%m%d')
-        
+        disable_proxy()
         # 优先使用akshare
         try:
             import akshare as ak
             print(f"[Akshare] 正在获取 {symbol} 的历史数据...")
+            import os
+            # 局部禁用代理
+            os.environ['NO_PROXY'] = 'eastmoney.com,127.0.0.1,localhost'
             
             df = ak.stock_zh_a_hist(
                 symbol=symbol,
@@ -136,7 +155,8 @@ class DataSourceManager:
         # 两个数据源都失败
         print("❌ 所有数据源均获取失败")
         return None
-    
+   
+        
     def get_stock_basic_info(self, symbol):
         """
         获取股票基本信息（优先akshare，失败时使用tushare）
@@ -153,57 +173,60 @@ class DataSourceManager:
             "industry": "未知",
             "market": "未知"
         }
-        
-        # 优先使用akshare
-        try:
-            import akshare as ak
-            print(f"[Akshare] 正在获取 {symbol} 的基本信息...")
+        tdx_data = tdxDataFetcher.get_stock_basic_info(symbol)
+        local_data = local_data_manager. get_stock_info(symbol)
+        tdx_data["industry"] = local_data.get("industry", "未知")  # 优先使用本地数据的行业信息
+        tdx_data["list_date"] = local_data.get("list_date", "未知")  # 优先使用本地数据的上市日期信息
+        return tdx_data
+        # try:
+        #     import akshare as ak
+        #     print(f"[Akshare] 正在获取 {symbol} 的基本信息...")
             
-            stock_info = ak.stock_individual_info_em(symbol=symbol)
-            if stock_info is not None and not stock_info.empty:
-                for _, row in stock_info.iterrows():
-                    key = row['item']
-                    value = row['value']
+        #     stock_info = ak.stock_individual_info_em(symbol=symbol)
+        #     if stock_info is not None and not stock_info.empty:
+        #         for _, row in stock_info.iterrows():
+        #             key = row['item']
+        #             value = row['value']
                     
-                    if key == '股票简称':
-                        info['name'] = value
-                    elif key == '所处行业':
-                        info['industry'] = value
-                    elif key == '上市时间':
-                        info['list_date'] = value
-                    elif key == '总市值':
-                        info['market_cap'] = value
-                    elif key == '流通市值':
-                        info['circulating_market_cap'] = value
+        #             if key == '股票简称':
+        #                 info['name'] = value
+        #             elif key == '所处行业':
+        #                 info['industry'] = value
+        #             elif key == '上市时间':
+        #                 info['list_date'] = value
+        #             elif key == '总市值':
+        #                 info['market_cap'] = value
+        #             elif key == '流通市值':
+        #                 info['circulating_market_cap'] = value
                 
-                print(f"[Akshare] ✅ 成功获取基本信息")
-                return info
-        except Exception as e:
-            print(f"[Akshare] ❌ 获取失败: {e}")
+        #         print(f"[Akshare] ✅ 成功获取基本信息")
+        #         return info
+        # except Exception as e:
+        #     print(f"[Akshare] ❌ 获取失败: {e}")
         
-        # akshare失败，尝试tushare
-        if self.tushare_available:
-            try:
-                print(f"[Tushare] 正在获取 {symbol} 的基本信息（备用数据源）...")
+        # # akshare失败，尝试tushare
+        # if self.tushare_available:
+        #     try:
+        #         print(f"[Tushare] 正在获取 {symbol} 的基本信息（备用数据源）...")
                 
-                ts_code = self._convert_to_ts_code(symbol)
-                df = self.tushare_api.stock_basic(
-                    ts_code=ts_code,
-                    fields='ts_code,name,area,industry,market,list_date'
-                )
+        #         ts_code = self._convert_to_ts_code(symbol)
+        #         df = self.tushare_api.stock_basic(
+        #             ts_code=ts_code,
+        #             fields='ts_code,name,area,industry,market,list_date'
+        #         )
                 
-                if df is not None and not df.empty:
-                    info['name'] = df.iloc[0]['name']
-                    info['industry'] = df.iloc[0]['industry']
-                    info['market'] = df.iloc[0]['market']
-                    info['list_date'] = df.iloc[0]['list_date']
+        #         if df is not None and not df.empty:
+        #             info['name'] = df.iloc[0]['name']
+        #             info['industry'] = df.iloc[0]['industry']
+        #             info['market'] = df.iloc[0]['market']
+        #             info['list_date'] = df.iloc[0]['list_date']
                     
-                    print(f"[Tushare] ✅ 成功获取基本信息")
-                    return info
-            except Exception as e:
-                print(f"[Tushare] ❌ 获取失败: {e}")
+        #             print(f"[Tushare] ✅ 成功获取基本信息")
+        #             return info
+        #     except Exception as e:
+        #         print(f"[Tushare] ❌ 获取失败: {e}")
         
-        return info
+        # return info
     
     def get_realtime_quotes(self, symbol):
         """
@@ -376,4 +399,6 @@ class DataSourceManager:
 
 # 全局数据源管理器实例
 data_source_manager = DataSourceManager()
+bd = data_source_manager.get_stock_basic_info("000630")
+print(bd)
 

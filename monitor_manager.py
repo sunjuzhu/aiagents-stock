@@ -381,19 +381,19 @@ def display_edit_dialog(stock_id: int):
         st.markdown("##### 🛠️ 管理操作")
         
         # 1. 立即更新按钮
-        if st.button("🔄 立即更新", key=f"upd_{stock['id']}", use_container_width=True):
+        if st.button("🔄 立即更新", key=f"upd_{stock['id']}", width=True):
             monitor_service.manual_update_stock(stock['id'])
             st.success("更新请求已发送")
             time.sleep(0.5)
             st.rerun()
 
         # 2. 优化后的删除逻辑 (使用 popover 替代 form)
-        if st.button("🗑️ 删除监测", key=f"del_trig_{stock['id']}", use_container_width=True):
+        if st.button("🗑️ 删除监测", key=f"del_trig_{stock['id']}", width=True):
             st.session_state.deleting_stock_id = stock['id'] # 👈 只记录 ID
             st.rerun() # 👈 强制刷新，让页面走到 244 行的检测逻辑
 
         # 3. 编辑按钮
-        if st.button("📝 编辑设置", key=f"edit_{stock['id']}", use_container_width=True):
+        if st.button("📝 编辑设置", key=f"edit_{stock['id']}", width=True):
             st.session_state.editing_stock_id = stock['id']
             st.rerun()
 
@@ -424,7 +424,7 @@ def display_delete_confirm_dialog(stock_id):
         # 🚨 关键修复：添加 key=f"confirm_del_{stock_id}"
         if st.button("🔥 确认删除", 
                      type="primary", 
-                     use_container_width=True, 
+                     width=True, 
                      key=f"confirm_del_{stock_id}"): # <--- 必须唯一
             if monitor_db.remove_monitored_stock(stock_id):
                 st.success(f"✅ {s_name} 已成功移除")
@@ -438,7 +438,7 @@ def display_delete_confirm_dialog(stock_id):
     with col2:
         # 🚨 关键修复：添加 key=f"cancel_del_{stock_id}"
         if st.button("取消", 
-                     use_container_width=True, 
+                     width=True, 
                      key=f"cancel_del_{stock_id}"): # <--- 必须唯一
             if 'deleting_stock_id' in st.session_state:
                 del st.session_state.deleting_stock_id

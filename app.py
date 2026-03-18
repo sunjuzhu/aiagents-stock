@@ -1700,7 +1700,7 @@ def display_stock_chart(stock_data, stock_info):
 
     # 生成唯一的key
     chart_key = f"main_stock_chart_{stock_info.get('symbol', 'unknown')}_{int(time.time())}"
-    st.plotly_chart(fig, use_container_width=True, config={'responsive': True}, key=chart_key)
+    st.plotly_chart(fig, width=True, config={'responsive': True}, key=chart_key)
 
     # 成交量图
     if 'Volume' in stock_data.columns:
@@ -1721,7 +1721,7 @@ def display_stock_chart(stock_data, stock_info):
 
         # 生成唯一的key
         volume_key = f"volume_chart_{stock_info.get('symbol', 'unknown')}_{int(time.time())}"
-        st.plotly_chart(fig_volume, use_container_width=True, config={'responsive': True}, key=volume_key)
+        st.plotly_chart(fig_volume, width=True, config={'responsive': True}, key=volume_key)
 
 def display_agents_analysis(agents_results):
     """显示各分析师报告"""
@@ -1967,7 +1967,7 @@ def display_history_records():
 
             with col4:
                 # 这里的按钮会自动垂直居中对齐
-                if st.button("➕ 加入监测", key=f"add_monitor_{record['id']}", use_container_width=True):
+                if st.button("➕ 加入监测", key=f"add_monitor_{record['id']}", width=True):
                     print(f"DEBUG: Button '加入监测' clicked for record ID: {record['id']}")
                     st.session_state.add_to_monitor_id = record['id']
                     st.session_state.viewing_record_id = record['id']
@@ -2092,7 +2092,7 @@ def display_add_to_monitor_dialog(record):
     # --- 6. 提交动作 ---
     btn_col1, btn_col2 = st.columns(2)
     with btn_col1:
-        if st.button("✅ 确认加入监测", type="primary", use_container_width=True, key=f"confirm_{rid}"):
+        if st.button("✅ 确认加入监测", type="primary", width=True, key=f"confirm_{rid}"):
             # 校验：至少最高价要大于0
             if new_max > 0:
                 try:
@@ -2128,7 +2128,7 @@ def display_add_to_monitor_dialog(record):
                 st.error("请输入有效的最高进场价")
 
     with btn_col2:
-        if st.button("❌ 取消", use_container_width=True, key=f"cancel_{rid}"):
+        if st.button("❌ 取消", width=True, key=f"cancel_{rid}"):
             st.rerun()
    
 
@@ -2585,7 +2585,7 @@ def display_config_manager():
                 st.success("✅ 邮件配置完整")
                 
                 # 放置测试按钮
-                if st.button("🧪 测试邮件发送", use_container_width=True, key="test_email_btn"):
+                if st.button("🧪 测试邮件发送", width=True, key="test_email_btn"):
                     with st.spinner("正在尝试发送测试邮件..."):
                         # 1. 备份并临时更新环境变量（确保测试的是当前输入的内容）
                         mail_keys = ["EMAIL_ENABLED", "SMTP_SERVER", "SMTP_PORT", "EMAIL_FROM", "EMAIL_PASSWORD", "EMAIL_TO"]

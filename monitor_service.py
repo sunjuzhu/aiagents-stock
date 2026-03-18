@@ -32,7 +32,7 @@ class StockMonitorService:
         
         # 从环境变量获取TDX配置
         tdx_enabled = os.getenv('TDX_ENABLED', 'false').lower() == 'true'
-        tdx_base_url = os.getenv('TDX_BASE_URL', 'http://192.168.1.222:8181')
+        tdx_base_url = os.getenv('TDX_BASE_URL', 'http://127.0.0.1:8080')
         
         if tdx_enabled and TDX_AVAILABLE:
             try:
