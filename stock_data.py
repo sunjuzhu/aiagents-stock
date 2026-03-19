@@ -67,181 +67,113 @@ class StockDataFetcher:
             symbol = symbol[2:]
         # 补齐到5位
         return symbol.zfill(5)
-    
     def _get_chinese_stock_info(self, symbol):
-        """获取中国股票基本信息（支持akshare和tushare数据源自动切换）"""
+        """
+        获取中国股票基本信息（增强版：集成腾讯/新浪备援，抗封锁优化）
+        """
+        import os
+        import pandas as pd
+        from datetime import datetime, timedelta
+        import akshare as ak
+
+        # 1. 环境准备：强制禁用代理，防止国内请求撞到 10808 端口
+        # os.environ['NO_PROXY'] = 'eastmoney.com,gtimg.cn,sina.com.cn,baidu.com,127.0.0.1,localhost'
+
+        # 初始化结构
+        info = {
+            "symbol": symbol,
+            "name": f"股票{symbol}",
+            "current_price": "N/A",
+            "change_percent": "N/A",
+            "pe_ratio": "N/A",
+            "pb_ratio": "N/A",
+            "market_cap": "N/A",
+            "market": "中国A股",
+            "exchange": "上海/深圳证券交易所"
+        }
+
         try:
-            # 初始化基本信息
-            info = {
-                "symbol": symbol,
-                "name": "未知",
-                "current_price": "N/A",
-                "change_percent": "N/A",
-                "pe_ratio": "N/A",
-                "pb_ratio": "N/A",
-                "market_cap": "N/A",
-                "market": "中国A股",
-                "exchange": "上海/深圳证券交易所"
-            }
-            
-            # 先尝试使用数据源管理器获取基本信息
-            basic_info = self.data_source_manager.get_stock_basic_info(symbol)
-            if basic_info:
-                info.update(basic_info)
-            
-            # 方法1: 尝试获取个股详细信息（akshare）
+            # --- 步骤 A: 优先使用“轻量级”腾讯源获取实时行情 ---
+            # 理由：腾讯接口极快，且不容易导致 RemoteDisconnected
+            try:
+                print(f"[Backup-Source] 尝试通过腾讯/新浪获取 {symbol} 实时数据...")
+                quote = self.data_source_manager.get_quote_tencent(symbol)
+                if quote:
+                    info.update({
+                        "name": quote.get('name', info['name']),
+                        "current_price": quote.get('price', "N/A"),
+                        "change_percent": quote.get('change_percent', "N/A"),
+                        "market_cap": quote.get('amount', "N/A") # 临时占位，后续由详情接口覆盖
+                    })
+            except Exception as e:
+                print(f"[Backup-Source] 腾讯源获取失败: {e}")
+
+            # --- 步骤 B: 尝试获取东财深度详情 (PE/PB/总市值) ---
             try:
                 stock_info = ak.stock_individual_info_em(symbol=symbol)
                 if stock_info is not None and not stock_info.empty:
                     for _, row in stock_info.iterrows():
-                        key = row['item']
-                        value = row['value']
+                        key, value = row['item'], row['value']
+                        if value == '-' or not value: continue
                         
                         if key == '股票简称':
                             info['name'] = value
                         elif key == '总市值':
-                            try:
-                                if value and value != '-':
-                                    info['market_cap'] = float(value)
-                            except:
-                                pass
+                            info['market_cap'] = float(value)
                         elif key == '市盈率-动态':
-                            try:
-                                if value and value != '-':
-                                    pe_value = float(value)
-                                    if 0 < pe_value <= 1000:
-                                        info['pe_ratio'] = pe_value
-                            except:
-                                pass
+                            val = float(value)
+                            if 0 < val <= 1000: info['pe_ratio'] = val
                         elif key == '市净率':
-                            try:
-                                if value and value != '-':
-                                    pb_value = float(value)
-                                    if 0 < pb_value <= 100:
-                                        info['pb_ratio'] = pb_value
-                            except:
-                                pass
+                            val = float(value)
+                            if 0 < val <= 100: info['pb_ratio'] = val
+                    print(f"[Akshare] ✅ 成功获取个股详细信息")
             except Exception as e:
-                print(f"[Akshare] 获取个股详细信息失败: {e}")
-                # 如果akshare失败，尝试从tushare获取
-                if self.data_source_manager.tushare_available and info['name'] == '未知':
-                    print(f"[Tushare] 尝试获取基本信息（tushare）...")
+                print(f"[Akshare] ❌ 详情接口断连: {e}")
+                # 如果东财挂了，尝试 Tushare 补救 PE/PB
+                if self.data_source_manager.tushare_available:
                     try:
                         ts_code = self.data_source_manager._convert_to_ts_code(symbol)
-                        df = self.data_source_manager.tushare_api.daily_basic(
-                            ts_code=ts_code,
-                            trade_date=datetime.now().strftime('%Y%m%d')
+                        df_ts = self.data_source_manager.tushare_api.daily_basic(
+                            ts_code=ts_code, trade_date=datetime.now().strftime('%Y%m%d')
                         )
-                        if df is not None and not df.empty:
-                            row = df.iloc[0]
-                            info['pe_ratio'] = row.get('pe', None)
-                            info['pb_ratio'] = row.get('pb', None)
-                            info['market_cap'] = row.get('total_mv', None)
-                            print(f"[Tushare] ✅ 成功获取部分信息")
-                    except Exception as te:
-                        print(f"[Tushare] ❌ 获取失败: {te}")
-            
-            # 方法2: 尝试获取历史价格和涨跌幅（如果网络允许）
-            # try:
-            #     # 使用更简单的接口获取实时价格
-            #     real_time_data = ak.stock_zh_a_spot_em()
-            #     if real_time_data is not None and not real_time_data.empty:
-            #         stock_real_time = real_time_data[real_time_data['代码'] == symbol]
-            #         if not stock_real_time.empty:
-            #             row = stock_real_time.iloc[0]
-            #             info['current_price'] = row.get('最新价', None)
-            #             info['change_percent'] = row.get('涨跌幅', None)
-            #             if info['name'] == '未知':
-            #                 info['name'] = row.get('名称', '未知')
-                        
-            #             # 如果实时数据中有市盈率和市净率，优先使用
-            #             if '市盈率-动态' in row and info['pe_ratio'] == None:
-            #                 try:
-            #                     pe_val = row['市盈率-动态']
-            #                     if pe_val and pe_val != '-':
-            #                         pe_val = float(pe_val)
-            #                         if 0 < pe_val <= 1000:
-            #                             info['pe_ratio'] = pe_val
-            #                 except:
-            #                     pass
-                        
-            #             if '市净率' in row and info['pb_ratio'] == None:
-            #                 try:
-            #                     pb_val = row['市净率']
-            #                     if pb_val and pb_val != '-':
-            #                         pb_val = float(pb_val)
-            #                         if 0 < pb_val <= 100:
-            #                             info['pb_ratio'] = pb_val
-            #                 except:
-            #                     pass
-                                
-            # except Exception as e:
-            #     print(f"[Akshare] 获取实时数据失败: {e}")
-            #     # 如果实时数据获取失败，尝试使用数据源管理器获取历史数据（支持tushare备用）
-            try:
-                print(f"[数据源管理器] 尝试获取最近交易数据...")
-                hist_data = self.data_source_manager.get_stock_hist_data(
-                    symbol=symbol,
-                    start_date=(datetime.now() - timedelta(days=30)).strftime('%Y%m%d'),
-                    end_date=datetime.now().strftime('%Y%m%d'),
-                    adjust='qfq'
-                )
-                
-                if hist_data is not None and not hist_data.empty:
-                    # 标准化列名
-                    if 'close' in hist_data.columns:
+                        if not df_ts.empty:
+                            row = df_ts.iloc[0]
+                            if info['pe_ratio'] == "N/A": info['pe_ratio'] = row.get('pe')
+                            if info['pb_ratio'] == "N/A": info['pb_ratio'] = row.get('pb')
+                            if info['market_cap'] == "N/A": info['market_cap'] = row.get('total_mv')
+                    except: pass
+
+            # --- 步骤 C: 历史价格补全（如果实时源全挂了） ---
+            if info['current_price'] == "N/A":
+                try:
+                    hist_data = self.data_source_manager.get_stock_hist_data(
+                        symbol=symbol,
+                        start_date=(datetime.now() - timedelta(days=5)).strftime('%Y%m%d'),
+                        end_date=datetime.now().strftime('%Y%m%d')
+                    )
+                    if not hist_data.empty:
                         latest = hist_data.iloc[-1]
-                        info['current_price'] = latest['close']
-                        # 计算涨跌幅
-                        if len(hist_data) > 1:
-                            prev_close = hist_data.iloc[-2]['close']
-                            change_pct = ((latest['close'] - prev_close) / prev_close) * 100
-                            info['change_percent'] = round(change_pct, 2)
-                        print(f"[数据源管理器] ✅ 成功获取价格数据")
-            except Exception as e2:
-                print(f"获取历史数据也失败: {e2}")
-            
-            # 方法3: 使用百度估值数据获取市盈率和市净率
-            if info['pe_ratio'] == None:
-                try:
-                    pe_data = ak.stock_zh_valuation_baidu(symbol=symbol, indicator="市盈率(TTM)")
-                    if pe_data is not None and not pe_data.empty:
-                        latest_pe = pe_data.iloc[-1]['value']
-                        if latest_pe and latest_pe != '-':
-                            pe_val = float(latest_pe)
-                            if 0 < pe_val <= 1000:
-                                info['pe_ratio'] = pe_val
-                except Exception as e:
-                    print(f"获取市盈率失败: {e}")
-            
-            if info['pb_ratio'] == None:
-                try:
-                    pb_data = ak.stock_zh_valuation_baidu(symbol=symbol, indicator="市净率")
-                    if pb_data is not None and not pb_data.empty:
-                        latest_pb = pb_data.iloc[-1]['value']
-                        if latest_pb and latest_pb != '-':
-                            pb_val = float(latest_pb)
-                            if 0 < pb_val <= 100:
-                                info['pb_ratio'] = pb_val
-                except Exception as e:
-                    print(f"获取市净率失败: {e}")
-            
+                        info['current_price'] = latest.get('close', "N/A")
+                        print(f"[History-Source] ✅ 成功从历史数据补全报价")
+                except: pass
+
+            # --- 步骤 D: 百度估值兜底 (针对 PE/PB) ---
+            for indicator, key in [("市盈率(TTM)", "pe_ratio"), ("市净率", "pb_ratio")]:
+                if info[key] == "N/A":
+                    try:
+                        val_data = ak.stock_zh_valuation_baidu(symbol=symbol, indicator=indicator)
+                        if not val_data.empty:
+                            last_val = val_data.iloc[-1]['value']
+                            if last_val and last_val != '-':
+                                info[key] = float(last_val)
+                    except: pass
+
+            print(f"✅ {symbol} 基本信息获取完成: {info['name']} | 价格: {info['current_price']}")
             return info
-            
-        except Exception as e:
-            print(f"获取中国股票信息完全失败: {e}")
-            # 返回基本信息，避免完全失败
-            return {
-                "symbol": symbol,
-                "name": f"股票{symbol}",
-                "current_price": "N/A",
-                "change_percent": "N/A",
-                "pe_ratio": "N/A",
-                "pb_ratio": "N/A",
-                "market_cap": "N/A",
-                "market": "中国A股",
-                "exchange": "上海/深圳证券交易所"
-            }
+
+        except Exception as global_e:
+            print(f"❌ 严重错误: {global_e}")
+            return info # 始终返回字典，防止上层 crash
     
     def _get_hk_stock_info(self, symbol):
         """获取港股基本信息"""
@@ -881,3 +813,11 @@ class StockDataFetcher:
         except:
             pass
         return None
+
+
+#测试 _get_chinese_stock_info
+if __name__ == "__main__":
+    manager = StockDataFetcher()
+    symbol = "600519"  # 贵州茅台
+    info = manager._get_chinese_stock_info(symbol)
+    print(info)

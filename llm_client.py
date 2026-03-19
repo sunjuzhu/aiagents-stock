@@ -1,9 +1,14 @@
-import openai
+from pyexpat.errors import messages
+
+import openai,httpx
 import json
 from typing import Dict, List, Any, Optional
 import config
 import os
-
+http_client = httpx.Client(
+                proxy="http://127.0.0.1:10808",
+                timeout=httpx.Timeout(120.0, connect=10.0)
+            )
 class LLMClient:
     """DeepSeek API客户端"""
     
@@ -11,50 +16,78 @@ class LLMClient:
         self.model = model or config.DEFAULT_MODEL_NAME
         self.client = openai.OpenAI(
             api_key=config.API_KEY,
-            base_url=config.BASE_URL
+            base_url=config.BASE_URL,
+            http_client=http_client
         )
         
     def call_api(self, messages: List[Dict[str, str]], model: Optional[str] = None, 
                  temperature: float = 0.7, max_tokens: int = 2000) -> str:
+        # os.environ["HTTP_PROXY"] = "http://127.0.0.1:10808"
+        # os.environ["HTTPS_PROXY"] = "http://127.0.0.1:10808"
         """调用DeepSeek API"""
         # 使用实例的模型，如果没有传入则使用默认模型
         model_to_use = model or self.model
-        
-        # 对于 reasoner 模型，自动增加 max_tokens
-        if "reasoner" in model_to_use.lower() and max_tokens <= 2000:
-            max_tokens = 8000  # reasoner 模型需要更多 tokens 来输出推理过程
-        
+        is_reasoner = "reasoner" in model_to_use.lower()
+        # 1. 参数预处理：针对 Reasoner 模型的特殊要求
+        # 💡 这样可以确保只有 AI 请求走代理，不干扰你的国内行情抓取
+       
+        api_params = {
+            "model": model_to_use,
+            "messages": messages
+        }
+        if is_reasoner:
+            # Reasoner 模型通常需要更大的输出空间来存储思维链
+            # 注意：部分 API 提供商要求 Reasoner 使用 max_completion_tokens 字段
+            api_params["max_tokens"] = 8000 
+            # 💡 关键：很多 Reasoner 接口不支持自定义 temperature，如果报错请注释掉下一行
+            # api_params["temperature"] = 1.0 
+        else:
+            api_params["temperature"] = temperature
+            api_params["max_tokens"] = max_tokens
+
         try:
-            response = self.client.chat.completions.create(
-                model=model_to_use,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
+            # 2. 核心调用：直接解包参数，不经过可能产生 "options" 字段的中间件
+            response = self.client.chat.completions.create(**api_params)
             
-            # 处理 reasoner 模型的响应
             message = response.choices[0].message
+            result = []
             
-            # reasoner 模型可能包含 reasoning_content（推理过程）和 content（最终答案）
-            # 我们返回完整内容，包括推理过程（如果有的话）
-            result = ""
+            # 3. 处理思维链 (Reasoning Content)
+            # 适配标准 OpenAI 格式及部分中转站格式
+            reasoning = getattr(message, 'reasoning_content', None)
+            if reasoning:
+                result.append(f"🔍 【思维链推理】\n{reasoning}\n")
             
-            # 检查是否有推理内容
-            if hasattr(message, 'reasoning_content') and message.reasoning_content:
-                result += f"【推理过程】\n{message.reasoning_content}\n\n"
+            # 4. 提取最终答案
+            content = getattr(message, 'content', "")
+            if content:
+                result.append(content)
             
-            # 添加最终内容
-            if message.content:
-                result += message.content
-            
-            return result if result else "API返回空响应"
+            return "\n".join(result) if result else "⚠️ API 返回了空响应"
             
         except Exception as e:
-            return f"API调用失败: {str(e)}"
+            # 针对 400 错误的精准捕获调试
+            error_msg = str(e)
+            if "options" in error_msg:
+                return f"❌ 接口封装错误：请检查 client 是否为最新版或是否存在拦截器注入了非法 options 字段。错误详情: {error_msg}"
+            return f"❌ API 调用失败: {error_msg}"
     
 
-
+    def streamline_hist_data(self, df):
+        # 1. 只保留已经计算出数值的行（或者只取最近 30-60 条）
+        # 2. 删除全是 null 的列
+        df = df.dropna(axis=1, how='all')
+        
+        # 3. 只保留对 AI 分析最关键的字段
+        keep_cols = ['index', 'open', 'high', 'low', 'close', 'volume', 'ma5', 'rsi', 'k', 'd']
+        existing_cols = [c for c in keep_cols if c in df.columns]
+        df = df[existing_cols]
+        
+        # 4. 取最近的 N 行（AI 不需要 240 天那么长，除非是周线分析）
+        return df.tail(30)
     def technical_analysis(self, stock_info: Dict, stock_data: Any, indicators: Dict) -> str:
+        stock_data = self.streamline_hist_data(stock_data)
+        
         """技术面分析 - 深度优化版：强化量价背离与分时图逃命信号"""
         prompt = f"""
 你是一名拥有20年实战经验的顶级首席技术分析师，擅长识破主力的诱多/诱空陷阱。请基于以下数据进行穿透式分析：
@@ -81,7 +114,7 @@ class LLMClient:
 5. **作战方案**：给出具体的“场景触发”建议（例如：若 30 分钟内不放量收复 XX 价位，视为逻辑失效，建议立刻撤退）。
 
 报告要求：言简意赅，直指要害，剔除所有模棱两可的废话。
-"""
+"""     
         messages = [
             {"role": "system", "content": "你是一名冷酷的技术分析专家，你的唯一目标是帮投资者避开诱多陷阱并锁定真实趋势。"},
             {"role": "user", "content": prompt}

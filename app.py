@@ -825,7 +825,7 @@ def main():
     st.markdown("---")
     st.subheader("👥 选择分析师团队")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         enable_technical = st.checkbox("📊 技术分析师", value=True,
@@ -844,6 +844,10 @@ def main():
                                       help="负责市场情绪研究、ARBR指标分析（仅A股）")
         enable_news = st.checkbox("📰 新闻分析师", value=True,
                                  help="负责新闻事件分析、舆情研究（仅A股，qstock数据源）")
+        
+    with col4:
+        enable_final_decision = st.checkbox("📈 是否进行最后博弈与质询", value=True,
+                                      help="深度团队讨论与反向压测，提升决策质量（至少选择一位分析师）")
 
     # 显示已选择的分析师
     selected_analysts = []
@@ -859,6 +863,8 @@ def main():
         selected_analysts.append("市场情绪分析师")
     if enable_news:
         selected_analysts.append("新闻分析师")
+    if enable_final_decision:
+        selected_analysts.append("最终决策分析师")
 
     if selected_analysts:
         st.info(f"✅ 已选择 {len(selected_analysts)} 位分析师: {', '.join(selected_analysts)}")
@@ -872,6 +878,7 @@ def main():
     st.session_state.enable_risk = enable_risk
     st.session_state.enable_sentiment = enable_sentiment
     st.session_state.enable_news = enable_news
+    st.session_state.enable_final_decision = enable_final_decision
 
     st.markdown("---")
 
@@ -1360,6 +1367,7 @@ def run_stock_analysis(symbol, period):
 
         # 2.5 获取季报数据（仅在选择了基本面分析师且为A股时）
         enable_fundamental = st.session_state.get('enable_fundamental', True)
+        enable_final_decision = st.session_state.get('enable_final_decision', True)
         quarterly_data = None
         if enable_fundamental and fetcher._is_chinese_stock(symbol):
             status_text.text("📊 正在获取季报数据（akshare数据源）...")
@@ -1509,21 +1517,23 @@ def run_stock_analysis(symbol, period):
         # 显示各分析师报告
         display_agents_analysis(agents_results)
 
-        # 8. 团队讨论
-        status_text.text("🤝 分析团队正在讨论...")
-        discussion_result = agents.conduct_team_discussion(agents_results, stock_info)
-        progress_bar.progress(88)
+       
 
         # 显示团队讨论
-        display_team_discussion(discussion_result)
+        if enable_final_decision:
+             # 8. 团队讨论
+            status_text.text("🤝 分析团队正在讨论...")
+            discussion_result = agents.conduct_team_discussion(agents_results, stock_info)
+            progress_bar.progress(88)
+            display_team_discussion(discussion_result)
 
-        # 9. 最终决策
-        status_text.text("📋 正在制定最终投资决策...")
-        final_decision = agents.make_final_decision(discussion_result, stock_info, indicators)
-        progress_bar.progress(100)
+            # 9. 最终决策
+            status_text.text("📋 正在制定最终投资决策...")
+            final_decision = agents.make_final_decision(discussion_result, stock_info, indicators)
+            progress_bar.progress(100)
 
-        # 显示最终决策
-        display_final_decision(final_decision, stock_info, agents_results, discussion_result)
+            # 显示最终决策
+            display_final_decision(final_decision, stock_info, agents_results, discussion_result)
 
         # 保存分析结果到session_state（用于页面刷新后显示）
         st.session_state.analysis_completed = True

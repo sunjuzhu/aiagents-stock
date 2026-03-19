@@ -27,9 +27,9 @@ def disable_proxy():
             del os.environ[var]
     
     # 强制让 requests 库不使用代理
-    os.environ['NO_PROXY'] = '*'
+    # os.environ['NO_PROXY'] = '*'
 
-os.environ['NO_PROXY'] = 'eastmoney.com,tushare.pro,waditu.com,127.0.0.1,localhost'
+# os.environ['NO_PROXY'] = 'eastmoney.com,tushare.pro,waditu.com,127.0.0.1,localhost'
 
 warnings.filterwarnings('ignore')
 

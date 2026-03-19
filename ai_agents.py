@@ -2,6 +2,8 @@ from llm_client import LLMClient
 from typing import Dict, Any
 import time
 import config
+from save_df_to_json import save_hist_data_to_tmp, save_report_to_md
+
 
 class StockAnalysisAgents:
     """股票分析AI智能体集合"""
@@ -14,9 +16,9 @@ class StockAnalysisAgents:
         """技术面分析智能体"""
         print("🔍 技术分析师正在分析中...")
         time.sleep(1)  # 模拟分析时间
-        
         analysis = self.llm_client.technical_analysis(stock_info, stock_data, indicators)
-        
+        save_report_to_md(stock_info.get('name', 'unknown'), stock_info.get('symbol', 'unknown'), analysis)
+
         return {
             "agent_name": "技术分析师",
             "agent_role": "负责技术指标分析、图表形态识别、趋势判断",
@@ -41,7 +43,7 @@ class StockAnalysisAgents:
         time.sleep(1)
         
         analysis = self.llm_client.fundamental_analysis(stock_info, financial_data, quarterly_data)
-        
+          # 保存分析报告到本地 Markdown 文件
         return {
             "agent_name": "基本面分析师", 
             "agent_role": "负责公司财务分析、行业研究、估值分析",
@@ -177,8 +179,7 @@ class StockAnalysisAgents:
         """进行团队讨论 - 引入强制反向思维与风险辩论机制"""
         import time
         print(f"🤝 投委会正在对 {stock_info.get('name')} 进行最后博弈与质询...")
-        time.sleep(2)
-        
+        time.sleep(2)        
         # 收集参与分析的分析师名单和报告
         participants = []
         reports = []
@@ -222,78 +223,13 @@ class StockAnalysisAgents:
 """
         
         messages = [
-            {"role": "system", "content": "你是一名资深的投委会主席，擅长通过‘辩证法’和‘反向压测’来剔除投资中的虚假繁荣。"},
-            {"role": "user", "content": discussion_prompt}
+            {"role": "system", "content": discussion_prompt},
+            {"role": "user", "content": all_reports}
         ]
         
         discussion_result = self.llm_client.call_api(messages, max_tokens=6000)
         
         print("✅ 深度团队讨论与反向压测完成")
-        return discussion_result
-        """进行团队讨论"""
-        print("🤝 分析团队正在进行综合讨论...")
-        time.sleep(2)
-        
-        # 收集参与分析的分析师名单和报告
-        participants = []
-        reports = []
-        
-        if "technical" in agents_results:
-            participants.append("技术分析师")
-            reports.append(f"【技术分析师报告】\n{agents_results['technical'].get('analysis', '')}")
-        
-        if "fundamental" in agents_results:
-            participants.append("基本面分析师")
-            reports.append(f"【基本面分析师报告】\n{agents_results['fundamental'].get('analysis', '')}")
-        
-        if "fund_flow" in agents_results:
-            participants.append("资金面分析师")
-            reports.append(f"【资金面分析师报告】\n{agents_results['fund_flow'].get('analysis', '')}")
-        
-        if "risk_management" in agents_results:
-            participants.append("风险管理师")
-            reports.append(f"【风险管理师报告】\n{agents_results['risk_management'].get('analysis', '')}")
-        
-        if "market_sentiment" in agents_results:
-            participants.append("市场情绪分析师")
-            reports.append(f"【市场情绪分析师报告】\n{agents_results['market_sentiment'].get('analysis', '')}")
-        
-        if "news" in agents_results:
-            participants.append("新闻分析师")
-            reports.append(f"【新闻分析师报告】\n{agents_results['news'].get('analysis', '')}")
-        
-        # 组合所有报告
-        all_reports = "\n\n".join(reports)
-        
-        discussion_prompt = f"""
-现在进行投资决策团队会议，参会人员包括：{', '.join(participants)}。
-
-股票：{stock_info.get('name', None)} ({stock_info.get('symbol', None)})
-
-各分析师报告：
-
-{all_reports}
-
-请模拟一场真实的投资决策会议讨论：
-1. 各分析师观点的一致性和分歧
-2. 不同维度分析的权重考量
-3. 风险收益评估
-4. 投资时机判断
-5. 策略制定思路
-6. 达成初步共识
-
-请以对话形式展现讨论过程，体现专业团队的思辨过程。
-注意：只讨论参与分析的分析师的观点。
-"""
-        
-        messages = [
-            {"role": "system", "content": "你需要模拟一场专业的投资团队讨论会议，体现不同角色的观点碰撞和最终共识形成。"},
-            {"role": "user", "content": discussion_prompt}
-        ]
-        
-        discussion_result = self.llm_client.call_api(messages, max_tokens=6000)
-        
-        print("✅ 团队讨论完成")
         return discussion_result
     
     def make_final_decision(self, discussion_result: str, stock_info: Dict, indicators: Dict) -> Dict[str, Any]:

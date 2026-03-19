@@ -26,7 +26,6 @@ def disable_proxy():
             del os.environ[var]
     
     # 强制让 requests 库不使用代理
-    os.environ['NO_PROXY'] = '*'
 
 class DataSourceManager:
     """数据源管理器 - 实现akshare与tushare自动切换"""
@@ -71,13 +70,14 @@ class DataSourceManager:
         else:
             end_date = datetime.now().strftime('%Y%m%d')
         disable_proxy()
+
         # 优先使用akshare
         try:
             import akshare as ak
             print(f"[Akshare] 正在获取 {symbol} 的历史数据...")
             import os
             # 局部禁用代理
-            os.environ['NO_PROXY'] = 'eastmoney.com,127.0.0.1,localhost'
+            # os.environ['NO_PROXY'] = 'eastmoney.com,127.0.0.1,localhost'
             
             df = ak.stock_zh_a_hist(
                 symbol=symbol,
@@ -107,6 +107,32 @@ class DataSourceManager:
                 return df
         except Exception as e:
             print(f"[Akshare] ❌ 获取失败: {e}")
+
+        # --- 替换点：切换到新浪财经源 ---
+        try:
+            print(f"[Akshare-Sina] 🔄 正在切换至新浪源获取 {symbol}...")
+            # 注意：新浪接口需要带上 sh/sz 前缀
+            full_symbol = f"sh{symbol}" if symbol.startswith(('6', '9')) else f"sz{symbol}"
+            
+            # 使用 ak.stock_zh_a_daily (新浪源接口)
+            df_sina = ak.stock_zh_a_daily(symbol=full_symbol, start_date=start_date, end_date=end_date, adjust=adjust)
+            
+            if df_sina is not None and not df_sina.empty:
+                # 新浪返回的列名通常已经是英文或不同格式，需要统一化处理
+                # 新浪接口通常 index 是日期，我们需要重置它
+                df_sina = df_sina.reset_index()
+                df_sina = df_sina.rename(columns={
+                    'date': 'date', 'open': 'open', 'close': 'close', 
+                    'high': 'high', 'low': 'low', 'volume': 'volume',
+                    'amount': 'amount', 'outstanding_share': 'turnover'
+                })
+                print(f"[Akshare-Sina] ✅ 成功通过备份源获取 {len(df_sina)} 条数据")
+                return df_sina
+        except Exception as e_sina:
+            print(f"[Akshare-Sina] ❌ 新浪源也失败了: {e_sina}")
+            self.tushare_available = True
+
+        # 如果都失败了，返回空 DataFrame 而不是 None，防止后面 .head() 崩溃
         
         # akshare失败，尝试tushare
         if self.tushare_available:
@@ -178,55 +204,7 @@ class DataSourceManager:
         tdx_data["industry"] = local_data.get("industry", "未知")  # 优先使用本地数据的行业信息
         tdx_data["list_date"] = local_data.get("list_date", "未知")  # 优先使用本地数据的上市日期信息
         return tdx_data
-        # try:
-        #     import akshare as ak
-        #     print(f"[Akshare] 正在获取 {symbol} 的基本信息...")
-            
-        #     stock_info = ak.stock_individual_info_em(symbol=symbol)
-        #     if stock_info is not None and not stock_info.empty:
-        #         for _, row in stock_info.iterrows():
-        #             key = row['item']
-        #             value = row['value']
-                    
-        #             if key == '股票简称':
-        #                 info['name'] = value
-        #             elif key == '所处行业':
-        #                 info['industry'] = value
-        #             elif key == '上市时间':
-        #                 info['list_date'] = value
-        #             elif key == '总市值':
-        #                 info['market_cap'] = value
-        #             elif key == '流通市值':
-        #                 info['circulating_market_cap'] = value
-                
-        #         print(f"[Akshare] ✅ 成功获取基本信息")
-        #         return info
-        # except Exception as e:
-        #     print(f"[Akshare] ❌ 获取失败: {e}")
-        
-        # # akshare失败，尝试tushare
-        # if self.tushare_available:
-        #     try:
-        #         print(f"[Tushare] 正在获取 {symbol} 的基本信息（备用数据源）...")
-                
-        #         ts_code = self._convert_to_ts_code(symbol)
-        #         df = self.tushare_api.stock_basic(
-        #             ts_code=ts_code,
-        #             fields='ts_code,name,area,industry,market,list_date'
-        #         )
-                
-        #         if df is not None and not df.empty:
-        #             info['name'] = df.iloc[0]['name']
-        #             info['industry'] = df.iloc[0]['industry']
-        #             info['market'] = df.iloc[0]['market']
-        #             info['list_date'] = df.iloc[0]['list_date']
-                    
-        #             print(f"[Tushare] ✅ 成功获取基本信息")
-        #             return info
-        #     except Exception as e:
-        #         print(f"[Tushare] ❌ 获取失败: {e}")
-        
-        # return info
+
     
     def get_realtime_quotes(self, symbol):
         """
@@ -239,12 +217,19 @@ class DataSourceManager:
             dict: 实时行情数据
         """
         quotes = {}
+        # os.environ['NO_PROXY'] = 'eastmoney.com,sina.com.cn,127.0.0.1,localhost'
+        try:
+            tencent_quotes = self.get_quote_tencent(symbol)
+            if tencent_quotes:
+                return tencent_quotes
+        except Exception as e:
+            print(f"❌ 获取实时行情失败: {e}")
+
         
         # 优先使用akshare
         try:
             import akshare as ak
             print(f"[Akshare] 正在获取 {symbol} 的实时行情...")
-            
             df = ak.stock_zh_a_spot_em()
             stock_df = df[df['代码'] == symbol]
             
@@ -267,6 +252,7 @@ class DataSourceManager:
                 return quotes
         except Exception as e:
             print(f"[Akshare] ❌ 获取失败: {e}")
+            # return self.get_quote_tencent(symbol)
         
         # akshare失败，尝试tushare
         if self.tushare_available:
@@ -328,6 +314,7 @@ class DataSourceManager:
             if df is not None and not df.empty:
                 print(f"[Akshare] ✅ 成功获取财务数据")
                 return df
+            
         except Exception as e:
             print(f"[Akshare] ❌ 获取失败: {e}")
         
@@ -395,10 +382,50 @@ class DataSourceManager:
         if '.' in ts_code:
             return ts_code.split('.')[0]
         return ts_code
+    import requests
+
+    def get_quote_tencent(self, symbol):
+        """
+        使用腾讯接口获取实时行情，并对齐东财字段名
+        """
+        import requests
+        # 格式化代码
+        full_symbol = f"sh{symbol}" if symbol.startswith(('6', '9')) else f"sz{symbol}"
+        url = f"https://qt.gtimg.cn/q={full_symbol}"
+        
+        try:
+            # 强制直连，不走代理
+            r = requests.get(url, timeout=5, proxies={"http": None, "https": None})
+            if r.status_code == 200 and len(r.text) > 50:
+                # 腾讯返回格式: v_sz000630="1~铜陵有色~000630~3.45~3.41~3.42~..."
+                data = r.text.split('"')[1].split('~')
+                
+                # 映射索引位到你的目标字典
+                return {
+                    'symbol': symbol,
+                    'name': data[1],            # 名称
+                    'price': float(data[3]),    # 当前价 (最新价)
+                    'change_percent': float(data[32]), # 涨跌幅
+                    'change': float(data[31]),         # 涨跌额
+                    'volume': float(data[6]) * 100,    # 成交量 (腾讯返回单位是手，*100换算成股)
+                    'amount': float(data[37]) * 10000, # 成交额 (腾讯单位是万，*10000换算成元)
+                    'high': float(data[33]),    # 最高
+                    'low': float(data[34]),     # 最低
+                    'open': float(data[5]),     # 今开
+                    'pre_close': float(data[4]) # 昨收
+                }
+            else:
+                print(f"[Tencent] ❌ 数据格式异常或股票不存在: {symbol}")
+        except Exception as e:
+            print(f"[Tencent] ❌ 请求异常: {e}")
+        
+        return {}
 
 
 # 全局数据源管理器实例
 data_source_manager = DataSourceManager()
-bd = data_source_manager.get_stock_basic_info("000630")
+# bd = data_source_manager.get_stock_basic_info("000630")
+bd = data_source_manager.get_realtime_quotes("000630")
+# print("基本信息：",bd.columns)
 print(bd)
 
